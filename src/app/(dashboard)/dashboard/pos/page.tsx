@@ -6,12 +6,15 @@ import { useCartStore } from '@/store/cartStore'
 import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DiscountInput } from '@/components/DiscountInput'
+import { InvoiceConfirmationModal } from '@/components/InvoiceConfirmationModal'
 
 export default function POSPage() {
     const [products, setProducts] = useState<any[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [processing, setProcessing] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [sellerName, setSellerName] = useState('')
 
     const { items, addItem, removeItem, updateQuantity, updateDiscount, total, clearCart } = useCartStore()
 
@@ -23,7 +26,20 @@ export default function POSPage() {
     useEffect(() => {
         fetchProducts()
         fetchCustomers()
+        fetchSellerName()
     }, [])
+
+    const fetchSellerName = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', user.id)
+                .single()
+            if (profile) setSellerName(profile.full_name)
+        }
+    }
 
     const fetchCustomers = async () => {
         const { data } = await supabase
@@ -80,7 +96,16 @@ export default function POSPage() {
         }
     }
 
-    const handleCheckout = async () => {
+    const handleCheckout = () => {
+        if (items.length === 0) return
+        if (!selectedCustomer) {
+            alert('Por favor selecciona un cliente')
+            return
+        }
+        setShowConfirmModal(true)
+    }
+
+    const processCheckout = async () => {
         if (items.length === 0) return
         setProcessing(true)
 
@@ -95,18 +120,37 @@ export default function POSPage() {
                 return
             }
 
+            // Decrement Stock FIRST
+            for (const item of items) {
+                const { error: stockError } = await supabase.rpc('decrement_stock', {
+                    row_id: item.productId,
+                    quantity: item.quantity
+                })
+                if (stockError) throw new Error(`Error de stock: ${stockError.message}`)
+            }
+
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices')
                 .insert({
                     seller_id: user.user.id,
                     customer_id: selectedCustomer.id,
                     total: total(),
-                    status: 'paid'
+                    status: 'paid',
+                    invoice_type: 'POS'
                 })
                 .select()
                 .single()
 
-            if (invoiceError) throw invoiceError
+            if (invoiceError) {
+                // Restore stock if invoice fails
+                for (const item of items) {
+                    await supabase.rpc('increment_stock', {
+                        row_id: item.productId,
+                        quantity: item.quantity
+                    })
+                }
+                throw invoiceError
+            }
 
             // 2. Create Invoice Items
             const invoiceItems = items.map(item => ({
@@ -122,19 +166,22 @@ export default function POSPage() {
                 .from('invoice_items')
                 .insert(invoiceItems)
 
-            if (itemsError) throw itemsError
-
-            // 3. Update Stock
-            for (const item of items) {
-                await supabase.rpc('decrement_stock', {
-                    row_id: item.productId,
-                    quantity: item.quantity
-                })
+            if (itemsError) {
+                // Clean up if items fail
+                await supabase.from('invoices').delete().eq('id', invoice.id)
+                for (const item of items) {
+                    await supabase.rpc('increment_stock', {
+                        row_id: item.productId,
+                        quantity: item.quantity
+                    })
+                }
+                throw itemsError
             }
 
             alert('¡Venta realizada con éxito!')
             clearCart()
             fetchProducts()
+            setShowConfirmModal(false)
         } catch (error: any) {
             console.error('Checkout error:', error)
             alert('Error al procesar la venta: ' + error.message)
@@ -333,6 +380,28 @@ export default function POSPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Invoice Confirmation Modal */}
+            <InvoiceConfirmationModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={processCheckout}
+                loading={processing}
+                invoiceData={{
+                    customerName: selectedCustomer?.name || 'Cliente',
+                    sellerName: sellerName,
+                    items: items.map(item => ({
+                        productName: item.name,
+                        quantity: item.quantity,
+                        unitPrice: item.price,
+                        discount: item.discount,
+                        total: item.price * item.quantity * (1 - item.discount / 100)
+                    })),
+                    subtotal: total(), // total() already accounts for discounts
+                    total: total(), // Assuming total() is the final subtotal, logic might need adjustment if tax is added later
+                    invoiceType: 'POS'
+                }}
+            />
         </div>
     )
 }
