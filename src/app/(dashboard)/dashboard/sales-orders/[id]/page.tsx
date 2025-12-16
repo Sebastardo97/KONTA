@@ -27,7 +27,7 @@ type SalesOrder = {
     notes: string | null
     created_at: string
     updated_at: string // Matches DB schema
-    invoice_id: string | null
+    executed_invoice_id: string | null
 }
 
 type OrderItem = {
@@ -192,7 +192,7 @@ export default function SalesOrderDetailPage() {
                 .from('sales_orders')
                 .update({
                     status: 'executed',
-                    invoice_id: invoice.id
+                    executed_invoice_id: invoice.id
                 })
                 .eq('id', orderId)
 
@@ -404,7 +404,7 @@ export default function SalesOrderDetailPage() {
                 </div>
             )}
 
-            {order.status === 'executed' && order.invoice_id && (
+            {order.status === 'executed' && order.executed_invoice_id && (
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200 text-center">
                     <p className="text-green-800 font-medium">
                         ✓ Esta preventa fue ejecutada exitosamente
