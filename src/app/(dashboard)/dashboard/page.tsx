@@ -196,7 +196,7 @@ export default function Dashboard() {
                 }
             })
 
-            const myTotal = sellerTotals[userId] || 0
+            const myTotal = userId ? (sellerTotals[userId] || 0) : 0
             const myRank = Object.values(sellerTotals).filter(total => total > myTotal).length + 1
 
             setStats({
