@@ -23,6 +23,12 @@ type CartState = {
 export const useCartStore = create<CartState>((set, get) => ({
     items: [],
     addItem: (product) => {
+        // VALIDATION: Check if product has stock before adding
+        if (!product.stock || product.stock <= 0) {
+            alert(`❌ "${product.name}" está agotado. No hay unidades disponibles.`)
+            return
+        }
+
         const items = get().items
         const existingItem = items.find(item => item.productId === product.id)
 
@@ -32,7 +38,7 @@ export const useCartStore = create<CartState>((set, get) => ({
                     if (item.productId === product.id) {
                         const newQuantity = item.quantity + 1
                         if (newQuantity > item.stock) {
-                            alert(`Solo hay ${item.stock} unidades disponibles`)
+                            alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
                             return item
                         }
                         return { ...item, quantity: newQuantity }
@@ -66,7 +72,7 @@ export const useCartStore = create<CartState>((set, get) => ({
             items: get().items.map(item => {
                 if (item.productId === productId) {
                     if (quantity > item.stock) {
-                        alert(`Solo hay ${item.stock} unidades disponibles`)
+                        alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
                         return item
                     }
                     return { ...item, quantity }

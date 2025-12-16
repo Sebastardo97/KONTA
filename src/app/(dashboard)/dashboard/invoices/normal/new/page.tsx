@@ -91,8 +91,19 @@ export default function NewNormalInvoicePage() {
     }
 
     const addProduct = (product: any) => {
+        // VALIDATION: Check stock before adding
+        if (!product.stock || product.stock <= 0) {
+            alert(`❌ "${product.name}" está agotado. No hay unidades disponibles.`)
+            return
+        }
+
         const existing = items.find(i => i.productId === product.id)
         if (existing) {
+            // Check if adding one more would exceed stock
+            if (existing.quantity + 1 > product.stock) {
+                alert(`⚠️ Solo hay ${product.stock} unidades disponibles de "${product.name}"`)
+                return
+            }
             updateQuantity(product.id, existing.quantity + 1)
         } else {
             setItems([...items, {
