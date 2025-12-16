@@ -254,7 +254,7 @@ export default function NewSalesOrderPage() {
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <SellerSelect
                         value={selectedSeller}
-                        onChange={setSelectedSeller}
+                        onChange={(sellerId) => setSelectedSeller(sellerId || '')}
                         label="Asignar a Vendedor"
                     />
                     {selectedSeller && (
