@@ -62,7 +62,7 @@ export default function SalesOrderDetailPage() {
                 .select(`
                     *,
                     customer:customers(*),
-                    seller:profiles!sales_orders_seller_id_fkey(*)
+                    seller:profiles!sales_orders_assigned_to_profiles_fkey(*)
                 `)
                 .eq('id', orderId)
                 .single()
@@ -231,8 +231,8 @@ export default function SalesOrderDetailPage() {
                     </div>
                 </div>
                 <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${order.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                        order.status === 'executed' ? 'bg-green-100 text-green-800' :
-                            'bg-red-100 text-red-800'
+                    order.status === 'executed' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
                     }`}>
                     {order.status === 'pending' ? 'PENDIENTE' :
                         order.status === 'executed' ? 'EJECUTADA' :

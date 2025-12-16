@@ -148,8 +148,8 @@ export default function NewSalesOrderPage() {
                 .from('sales_orders')
                 .insert({
                     customer_id: selectedCustomer.id,
-                    seller_id: selectedSeller,
-                    total_amount: calculateTotal(),
+                    assigned_to: selectedSeller,
+                    total: calculateTotal(),
                     status: 'pending',
                     notes: notes || null
                 })
