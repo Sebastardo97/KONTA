@@ -450,5 +450,6 @@ export default function NewPOSInvoicePage() {
                     }}
                 />
             </div>
-            )
+        </div>
+    )
 }
