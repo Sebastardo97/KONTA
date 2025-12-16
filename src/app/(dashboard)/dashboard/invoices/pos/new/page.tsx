@@ -159,20 +159,43 @@ export default function NewPOSInvoicePage() {
 
         setLoading(true)
         try {
-            // 1. Create invoice
+            // CRITICAL: Decrement stock FIRST before creating invoice
+            // If stock fails, no invoice is created (no orphaned data)
+            for (const item of items) {
+                const { error: stockError } = await supabase.rpc('decrement_stock', {
+                    row_id: item.productId,
+                    quantity: item.quantity
+                })
+
+                if (stockError) {
+                    // Stock error - restore previously decremented items
+                    throw new Error(`Error de stock: ${stockError.message}`)
+                }
+            }
+
+            // 1. Create invoice (only after stock is confirmed)
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices')
                 .insert({
                     customer_id: selectedCustomer.id,
                     seller_id: selectedSeller,
-                    invoice_type: 'POS', // Important: POS type
+                    invoice_type: 'POS',
                     total: calculateTotal(),
                     status: 'paid'
                 })
                 .select()
                 .single()
 
-            if (invoiceError) throw invoiceError
+            if (invoiceError) {
+                // Invoice creation failed - restore stock
+                for (const item of items) {
+                    await supabase.rpc('increment_stock', {
+                        row_id: item.productId,
+                        quantity: item.quantity
+                    })
+                }
+                throw invoiceError
+            }
 
             // 2. Create invoice items
             const invoiceItems = items.map(item => ({
@@ -188,14 +211,16 @@ export default function NewPOSInvoicePage() {
                 .from('invoice_items')
                 .insert(invoiceItems)
 
-            if (itemsError) throw itemsError
-
-            // 3. Update stock
-            for (const item of items) {
-                await supabase.rpc('decrement_stock', {
-                    row_id: item.productId,
-                    quantity: item.quantity
-                })
+            if (itemsError) {
+                // Items creation failed - delete invoice and restore stock
+                await supabase.from('invoices').delete().eq('id', invoice.id)
+                for (const item of items) {
+                    await supabase.rpc('increment_stock', {
+                        row_id: item.productId,
+                        quantity: item.quantity
+                    })
+                }
+                throw itemsError
             }
 
             alert('¡Factura POS creada exitosamente!')
