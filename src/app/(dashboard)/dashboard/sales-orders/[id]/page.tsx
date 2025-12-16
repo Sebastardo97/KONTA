@@ -191,7 +191,7 @@ export default function SalesOrderDetailPage() {
             const { error: updateError } = await supabase
                 .from('sales_orders')
                 .update({
-                    status: 'executed',
+                    status: 'completed',
                     executed_invoice_id: invoice.id
                 })
                 .eq('id', orderId)
@@ -279,11 +279,11 @@ export default function SalesOrderDetailPage() {
                     </div>
                 </div>
                 <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${order.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                    order.status === 'executed' ? 'bg-green-100 text-green-800' :
+                    order.status === 'completed' ? 'bg-green-100 text-green-800' :
                         'bg-red-100 text-red-800'
                     }`}>
                     {order.status === 'pending' ? 'PENDIENTE' :
-                        order.status === 'executed' ? 'EJECUTADA' :
+                        order.status === 'completed' ? 'EJECUTADA' :
                             'CANCELADA'}
                 </div>
             </div>
@@ -404,7 +404,7 @@ export default function SalesOrderDetailPage() {
                 </div>
             )}
 
-            {order.status === 'executed' && order.executed_invoice_id && (
+            {order.status === 'completed' && order.executed_invoice_id && (
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200 text-center">
                     <p className="text-green-800 font-medium">
                         ✓ Esta preventa fue ejecutada exitosamente
