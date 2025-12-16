@@ -29,7 +29,7 @@ import { useRole } from '@/hooks/useRole'
 const adminNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart },
-    { name: 'Facturas POS', href: '/dashboard/invoices/pos', icon: FileText },
+    { name: 'Historial POS', href: '/dashboard/invoices/pos', icon: FileText },
     { name: 'Facturas Normal', href: '/dashboard/invoices/normal', icon: FileText },
     { name: 'Productos', href: '/dashboard/products', icon: Package },
     { name: 'Clientes', href: '/dashboard/customers', icon: Users },
@@ -45,7 +45,7 @@ const adminNavigation = [
 // Seller navigation - limited access
 const sellerNavigation = [
     { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart },
-    { name: 'Facturas POS', href: '/dashboard/invoices/pos', icon: FileText },
+    { name: 'Historial POS', href: '/dashboard/invoices/pos', icon: FileText },
     { name: 'Facturas Normal', href: '/dashboard/invoices/normal', icon: FileText },
     { name: 'Ver Productos', href: '/dashboard/products', icon: Package },
     { name: 'Mis Órdenes', href: '/dashboard/my-orders', icon: ClipboardList },

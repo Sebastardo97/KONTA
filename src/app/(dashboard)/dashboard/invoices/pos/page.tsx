@@ -80,11 +80,11 @@ export default function POSInvoicesPage() {
                     </p>
                 </div>
                 <Link
-                    href="/dashboard/invoices/pos/new"
+                    href="/dashboard/pos"
                     className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
                 >
                     <Plus className="h-5 w-5 mr-2" />
-                    Nueva Factura POS
+                    Ir al POS
                 </Link>
             </div>
 
@@ -100,11 +100,11 @@ export default function POSInvoicesPage() {
                         <h3 className="text-lg font-medium text-gray-900">No hay facturas POS</h3>
                         <p className="mt-1 text-gray-500">Crea tu primera factura POS legal</p>
                         <Link
-                            href="/dashboard/invoices/pos/new"
+                            href="/dashboard/pos"
                             className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
                         >
                             <Plus className="h-5 w-5 mr-2" />
-                            Crear Factura POS
+                            Ir al POS
                         </Link>
                     </div>
                 ) : (
