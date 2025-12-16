@@ -267,7 +267,7 @@ export default function NewPOSInvoicePage() {
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <SellerSelect
                         value={selectedSeller}
-                        onChange={setSelectedSeller}
+                        onChange={(sellerId) => setSelectedSeller(sellerId || '')}
                         disabled={!isAdmin}
                         label="Vendedor Asignado"
                     />
