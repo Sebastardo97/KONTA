@@ -26,7 +26,7 @@ type SalesOrder = {
     status: string
     notes: string | null
     created_at: string
-    executed_at: string | null
+    updated_at: string // Matches DB schema
     invoice_id: string | null
 }
 
@@ -192,7 +192,6 @@ export default function SalesOrderDetailPage() {
                 .from('sales_orders')
                 .update({
                     status: 'executed',
-                    executed_at: new Date().toISOString(),
                     invoice_id: invoice.id
                 })
                 .eq('id', orderId)
@@ -411,7 +410,7 @@ export default function SalesOrderDetailPage() {
                         ✓ Esta preventa fue ejecutada exitosamente
                     </p>
                     <p className="text-sm text-green-600 mt-1">
-                        Factura creada el {order.executed_at && new Date(order.executed_at).toLocaleDateString()}
+                        Factura creada el {new Date(order.updated_at).toLocaleDateString()}
                     </p>
                 </div>
             )}
