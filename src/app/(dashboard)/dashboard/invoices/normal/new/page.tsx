@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DiscountInput } from '@/components/DiscountInput'
 import { SellerSelect } from '@/components/SellerSelect'
+import { InvoiceConfirmationModal } from '@/components/InvoiceConfirmationModal'
 import { Search, Plus, Trash2, Save, Users } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
 
@@ -28,6 +29,8 @@ export default function NewNormalInvoicePage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [customerSearch, setCustomerSearch] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [sellerName, setSellerName] = useState('')
     const [showCustomerList, setShowCustomerList] = useState(false)
 
     useEffect(() => {
@@ -144,6 +147,7 @@ export default function NewNormalInvoicePage() {
     }
 
     const handleSubmit = async () => {
+        // Validation only - don't submit yet
         if (items.length === 0) {
             alert('Agrega al menos un producto')
             return
@@ -157,6 +161,18 @@ export default function NewNormalInvoicePage() {
             return
         }
 
+        // Fetch seller name for modal display
+        const { data: seller } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', selectedSeller)
+            .single()
+
+        setSellerName(seller?.full_name || 'Vendedor')
+        setShowConfirmModal(true)
+    }
+
+    const confirmAndSubmit = async () => {
         setLoading(true)
         try {
             // 1. Create invoice
@@ -386,5 +402,31 @@ export default function NewNormalInvoicePage() {
                 </div>
             </div>
         </div>
-    )
+
+        {/* Invoice Confirmation Modal */ }
+    <InvoiceConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmAndSubmit}
+        loading={loading}
+        invoiceData={{
+            customerName: selectedCustomer?.name || 'Cliente',
+            sellerName: sellerName,
+            items: items.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                discount: item.discount,
+                total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+            })),
+            subtotal: items.reduce((acc, item) => {
+                const discountedPrice = item.unitPrice * (1 - item.discount / 100)
+                return acc + (discountedPrice * item.quantity)
+            }, 0),
+            total: calculateTotal(),
+            invoiceType: 'Normal'
+        }}
+    />
+</div >
+)
 }
