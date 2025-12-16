@@ -401,32 +401,32 @@ export default function NewNormalInvoicePage() {
                     </button>
                 </div>
             </div>
-        </div>
 
-        {/* Invoice Confirmation Modal */ }
-    <InvoiceConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={confirmAndSubmit}
-        loading={loading}
-        invoiceData={{
-            customerName: selectedCustomer?.name || 'Cliente',
-            sellerName: sellerName,
-            items: items.map(item => ({
-                productName: item.productName,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                discount: item.discount,
-                total: item.unitPrice * item.quantity * (1 - item.discount / 100)
-            })),
-            subtotal: items.reduce((acc, item) => {
-                const discountedPrice = item.unitPrice * (1 - item.discount / 100)
-                return acc + (discountedPrice * item.quantity)
-            }, 0),
-            total: calculateTotal(),
-            invoiceType: 'Normal'
-        }}
-    />
-</div >
-)
+
+            {/* Invoice Confirmation Modal */}
+            <InvoiceConfirmationModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={confirmAndSubmit}
+                loading={loading}
+                invoiceData={{
+                    customerName: selectedCustomer?.name || 'Cliente',
+                    sellerName: sellerName,
+                    items: items.map(item => ({
+                        productName: item.productName,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        discount: item.discount,
+                        total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+                    })),
+                    subtotal: items.reduce((acc, item) => {
+                        const discountedPrice = item.unitPrice * (1 - item.discount / 100)
+                        return acc + (discountedPrice * item.quantity)
+                    }, 0),
+                    total: calculateTotal(),
+                    invoiceType: 'Normal'
+                }}
+            />
+        </div >
+    )
 }

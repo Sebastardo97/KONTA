@@ -20,7 +20,9 @@ type SalesOrder = {
     id: string
     customer: any
     seller: any
-    total_amount: number
+    created_by_user?: any // Added for robustness
+    created_by?: string // Added for logic
+    total: number
     status: string
     notes: string | null
     created_at: string
@@ -56,7 +58,10 @@ export default function SalesOrderDetailPage() {
 
     const fetchOrderDetails = async () => {
         try {
-            // Fetch order with customer and seller details
+            let finalOrder = null;
+
+            // 1. Fetch order with essential relations (customer and seller/assigned_to)
+            // Note: We avoid joining created_by here to prevent errors if the specific FK is missing
             const { data: orderData, error: orderError } = await supabase
                 .from('sales_orders')
                 .select(`
@@ -67,10 +72,52 @@ export default function SalesOrderDetailPage() {
                 .eq('id', orderId)
                 .single()
 
-            if (orderError) throw orderError
-            setOrder(orderData)
+            if (orderError) {
+                // Fallback: fetch without robust Foreign Keys in case of schema mismatch
+                console.warn('Primary fetch failed, trying fallback to partial fetch...', orderError);
 
-            // Fetch order items with product details
+                const { data: fallbackOrder, error: fallbackError } = await supabase
+                    .from('sales_orders')
+                    .select(`*, customer:customers(*)`)
+                    .eq('id', orderId)
+                    .single()
+
+                if (fallbackError) throw orderError // Throw original error if both fail
+
+                // Manually fetch seller if needed
+                if (fallbackOrder.assigned_to) {
+                    const { data: sellerProfile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', fallbackOrder.assigned_to)
+                        .single();
+                    (fallbackOrder as any).seller = sellerProfile
+                }
+                finalOrder = fallbackOrder;
+            } else {
+                finalOrder = orderData;
+            }
+
+            // Update state with what we found so far
+            setOrder(finalOrder);
+
+            // 2. Fetch "Created By" user details manually (Robust against missing FKs)
+            // Use the valid 'finalOrder' we just obtained
+            if (finalOrder && finalOrder.created_by) {
+                // Independent fetch for Creator
+                const { data: creatorProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', finalOrder.created_by)
+                    .single()
+
+                if (creatorProfile) {
+                    // Mutate the state to include it
+                    setOrder((prev: any) => ({ ...prev, created_by_user: creatorProfile }))
+                }
+            }
+
+            // 3. Fetch order items
             const { data: itemsData, error: itemsError } = await supabase
                 .from('sales_order_items')
                 .select(`
@@ -81,9 +128,11 @@ export default function SalesOrderDetailPage() {
 
             if (itemsError) throw itemsError
             setItems(itemsData || [])
+
         } catch (error) {
             console.error('Error fetching order:', error)
-            alert('Error al cargar la orden')
+            alert('Error al cargar la orden. Por favor intenta recargar.')
+            router.push('/dashboard/sales-orders'); // Redirect back on error to avoid broken state
         } finally {
             setLoading(false)
         }
@@ -106,7 +155,7 @@ export default function SalesOrderDetailPage() {
                     customer_id: order.customer.id,
                     seller_id: order.seller.id,
                     invoice_type: 'POS',
-                    total: order.total_amount,
+                    total: order.total,
                     status: 'paid'
                 })
                 .select()
@@ -207,7 +256,7 @@ export default function SalesOrderDetailPage() {
         )
     }
 
-    const canExecute = order.status === 'pending' && (isAdmin || order.seller.id === userId)
+    const canExecute = order.status === 'pending' && (isAdmin || (order.seller && order.seller.id === userId))
     const canCancel = order.status === 'pending' && isAdmin
 
     return (
@@ -241,15 +290,15 @@ export default function SalesOrderDetailPage() {
             </div>
 
             {/* Info Cards */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Customer */}
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center gap-2 mb-2">
                         <User className="h-4 w-4 text-gray-500" />
                         <span className="text-sm font-bold text-gray-700">Cliente</span>
                     </div>
-                    <p className="font-medium">{order.customer.name}</p>
-                    <p className="text-sm text-gray-600">{order.customer.nit_cedula}</p>
+                    <p className="font-medium">{order.customer?.name || 'Cliente desconocido'}</p>
+                    <p className="text-sm text-gray-600">{order.customer?.nit_cedula || ''}</p>
                 </div>
 
                 {/* Seller */}
@@ -258,8 +307,22 @@ export default function SalesOrderDetailPage() {
                         <User className="h-4 w-4 text-gray-500" />
                         <span className="text-sm font-bold text-gray-700">Vendedor</span>
                     </div>
-                    <p className="font-medium">{order.seller.full_name}</p>
-                    <p className="text-sm text-gray-600">{order.seller.email}</p>
+                    <p className="font-medium">{order.seller?.full_name || 'Sin asignar'}</p>
+                    <p className="text-sm text-gray-600">{order.seller?.email || ''}</p>
+                </div>
+
+                {/* Creator - The source of our focus */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-bold text-blue-900">Asignado Por</span>
+                    </div>
+                    <p className="font-medium text-blue-900">
+                        {order.created_by_user?.full_name || 'Admin Sistema'}
+                    </p>
+                    <p className="text-sm text-blue-700">
+                        {order.created_by_user?.email || ''}
+                    </p>
                 </div>
             </div>
 
@@ -312,7 +375,7 @@ export default function SalesOrderDetailPage() {
                         Total
                     </span>
                     <span className="text-green-600">
-                        ${order.total_amount.toLocaleString()}
+                        ${order.total.toLocaleString()}
                     </span>
                 </div>
             </div>

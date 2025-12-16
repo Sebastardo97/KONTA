@@ -9,7 +9,7 @@ const ADMIN_ROUTES = [
     '/dashboard/purchases',
     '/dashboard/settings',
     '/dashboard/reports',
-    '/dashboard/sales-orders',
+    // '/dashboard/sales-orders', // Handled component-level to allow shared detail view
     '/dashboard/sellers',
 ]
 

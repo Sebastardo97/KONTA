@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { DiscountInput } from '@/components/DiscountInput'
 import { SellerSelect } from '@/components/SellerSelect'
 import { Search, Trash2, Save, Users, UserCheck } from 'lucide-react'
+import { useRole } from '@/hooks/useRole'
 
 type OrderItem = {
     productId: string
@@ -17,6 +18,7 @@ type OrderItem = {
 
 export default function NewSalesOrderPage() {
     const router = useRouter()
+    const { userId } = useRole()
 
     const [products, setProducts] = useState<any[]>([])
     const [customers, setCustomers] = useState<any[]>([])
@@ -140,6 +142,10 @@ export default function NewSalesOrderPage() {
             alert('Asigna un vendedor a esta preventa')
             return
         }
+        if (!userId) {
+            alert('Error: No se puede identificar al usuario creador')
+            return
+        }
 
         setLoading(true)
         try {
@@ -149,6 +155,7 @@ export default function NewSalesOrderPage() {
                 .insert({
                     customer_id: selectedCustomer.id,
                     assigned_to: selectedSeller,
+                    created_by: userId,
                     total: calculateTotal(),
                     status: 'pending',
                     notes: notes || null

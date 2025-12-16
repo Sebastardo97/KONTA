@@ -18,14 +18,21 @@ type SalesOrder = {
     created_by_user: { full_name: string } | null
 }
 
+import { useRouter } from 'next/navigation'
+
 export default function SalesOrdersPage() {
+    const router = useRouter()
     const [orders, setOrders] = useState<SalesOrder[]>([])
     const [loading, setLoading] = useState(true)
-    const { isAdmin } = useRole()
+    const { isAdmin, isSeller } = useRole()
 
     useEffect(() => {
+        if (isSeller) {
+            router.push('/dashboard/my-orders')
+            return
+        }
         fetchOrders()
-    }, [])
+    }, [isSeller])
 
     const fetchOrders = async () => {
         try {
