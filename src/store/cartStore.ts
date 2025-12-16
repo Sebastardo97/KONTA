@@ -7,6 +7,7 @@ export type CartItem = {
     quantity: number
     stock: number // [NEW] Added to track available stock
     taxRate: number
+    discount: number // Discount percentage (0-100)
 }
 
 type CartState = {
@@ -14,6 +15,7 @@ type CartState = {
     addItem: (product: any) => void
     removeItem: (productId: string) => void
     updateQuantity: (productId: string, quantity: number) => void
+    updateDiscount: (productId: string, discount: number) => void
     clearCart: () => void
     total: () => number
 }
@@ -46,7 +48,8 @@ export const useCartStore = create<CartState>((set, get) => ({
                     price: product.price,
                     quantity: 1,
                     stock: product.stock,
-                    taxRate: product.tax_rate || 19
+                    taxRate: product.tax_rate || 19,
+                    discount: 0
                 }]
             })
         }
@@ -72,8 +75,18 @@ export const useCartStore = create<CartState>((set, get) => ({
             })
         })
     },
+    updateDiscount: (productId, discount) => {
+        set({
+            items: get().items.map(item =>
+                item.productId === productId ? { ...item, discount } : item
+            )
+        })
+    },
     clearCart: () => set({ items: [] }),
     total: () => {
-        return get().items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
+        return get().items.reduce((acc, item) => {
+            const discountedPrice = item.price * (1 - item.discount / 100)
+            return acc + (discountedPrice * item.quantity)
+        }, 0)
     }
 }))

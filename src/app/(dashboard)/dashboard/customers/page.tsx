@@ -10,6 +10,7 @@ type Customer = {
     nit_cedula: string
     email: string
     phone: string
+    phone2?: string
     address: string
 }
 
@@ -25,6 +26,7 @@ export default function CustomersPage() {
         nit_cedula: '',
         email: '',
         phone: '',
+        phone2: '',
         address: ''
     })
 
@@ -67,7 +69,7 @@ export default function CustomersPage() {
 
             setIsModalOpen(false)
             setEditingCustomer(null)
-            setFormData({ name: '', nit_cedula: '', email: '', phone: '', address: '' })
+            setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '' })
             fetchCustomers()
         } catch (error) {
             console.error('Error saving customer:', error)
@@ -82,6 +84,7 @@ export default function CustomersPage() {
             nit_cedula: customer.nit_cedula,
             email: customer.email || '',
             phone: customer.phone || '',
+            phone2: customer.phone2 || '',
             address: customer.address || ''
         })
         setIsModalOpen(true)
@@ -119,7 +122,7 @@ export default function CustomersPage() {
                 <button
                     onClick={() => {
                         setEditingCustomer(null)
-                        setFormData({ name: '', nit_cedula: '', email: '', phone: '', address: '' })
+                        setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '' })
                         setIsModalOpen(true)
                     }}
                     className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
@@ -215,6 +218,11 @@ export default function CustomersPage() {
                                                         <Phone className="h-3 w-3" /> {customer.phone}
                                                     </div>
                                                 )}
+                                                {customer.phone2 && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Phone className="h-3 w-3" /> {customer.phone2}
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -298,25 +306,35 @@ export default function CustomersPage() {
                                                 onChange={(e) => setFormData({ ...formData, nit_cedula: e.target.value })}
                                             />
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                placeholder="juan@empresa.com"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            />
+                                        </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                                <input
-                                                    type="email"
-                                                    className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                                    placeholder="juan@empresa.com"
-                                                    value={formData.email}
-                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono 1</label>
                                                 <input
                                                     type="text"
                                                     className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                                     placeholder="300 123 4567"
                                                     value={formData.phone}
                                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono 2</label>
+                                                <input
+                                                    type="text"
+                                                    className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                    placeholder="301 987 6543"
+                                                    value={formData.phone2}
+                                                    onChange={(e) => setFormData({ ...formData, phone2: e.target.value })}
                                                 />
                                             </div>
                                         </div>

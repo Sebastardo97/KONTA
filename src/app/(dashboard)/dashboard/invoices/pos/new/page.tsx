@@ -1,0 +1,379 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { DiscountInput } from '@/components/DiscountInput'
+import { SellerSelect } from '@/components/SellerSelect'
+import { Search, Plus, Trash2, Save, Users } from 'lucide-react'
+import { useRole } from '@/hooks/useRole'
+
+type InvoiceItem = {
+    productId: string
+    productName: string
+    quantity: number
+    unitPrice: number
+    discount: number
+}
+
+export default function NewPOSInvoicePage() {
+    const router = useRouter()
+    const { isAdmin, userId } = useRole()
+
+    const [products, setProducts] = useState<any[]>([])
+    const [customers, setCustomers] = useState<any[]>([])
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+    const [selectedSeller, setSelectedSeller] = useState<string>('')
+    const [items, setItems] = useState<InvoiceItem[]>([])
+    const [searchTerm, setSearchTerm] = useState('')
+    const [customerSearch, setCustomerSearch] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [showCustomerList, setShowCustomerList] = useState(false)
+
+    useEffect(() => {
+        fetchProducts()
+        fetchCustomers()
+        // If not admin, auto-set seller to current user
+        if (!isAdmin && userId) {
+            setSelectedSeller(userId)
+        }
+    }, [isAdmin, userId])
+
+    const fetchProducts = async () => {
+        const { data } = await supabase
+            .from('products')
+            .select('*')
+            .order('name')
+            .limit(50)
+        if (data) setProducts(data)
+    }
+
+    const fetchCustomers = async () => {
+        const { data } = await supabase
+            .from('customers')
+            .select('*')
+            .order('name')
+            .limit(10)
+        if (data) {
+            setCustomers(data)
+            const general = data.find(c => c.name === 'Cliente General')
+            setSelectedCustomer(general || data[0])
+        }
+    }
+
+    const searchProducts = async (term: string) => {
+        setSearchTerm(term)
+        if (term.length > 2) {
+            const { data } = await supabase
+                .from('products')
+                .select('*')
+                .or(`name.ilike.%${term}%,sku.ilike.%${term}%`)
+                .limit(10)
+            if (data) setProducts(data)
+        } else if (term.length === 0) {
+            fetchProducts()
+        }
+    }
+
+    const searchCustomers = async (term: string) => {
+        setCustomerSearch(term)
+        setShowCustomerList(true)
+        if (term.length > 1) {
+            const { data } = await supabase
+                .from('customers')
+                .select('*')
+                .or(`name.ilike.%${term}%,nit_cedula.ilike.%${term}%`)
+                .limit(5)
+            if (data) setCustomers(data)
+        } else {
+            fetchCustomers()
+        }
+    }
+
+    const addProduct = (product: any) => {
+        const existing = items.find(i => i.productId === product.id)
+        if (existing) {
+            updateQuantity(product.id, existing.quantity + 1)
+        } else {
+            setItems([...items, {
+                productId: product.id,
+                productName: product.name,
+                quantity: 1,
+                unitPrice: product.price,
+                discount: 0
+            }])
+        }
+    }
+
+    const updateQuantity = (productId: string, quantity: number) => {
+        if (quantity <= 0) {
+            setItems(items.filter(i => i.productId !== productId))
+        } else {
+            setItems(items.map(i =>
+                i.productId === productId ? { ...i, quantity } : i
+            ))
+        }
+    }
+
+    const updateDiscount = (productId: string, discount: number) => {
+        setItems(items.map(i =>
+            i.productId === productId ? { ...i, discount } : i
+        ))
+    }
+
+    const removeItem = (productId: string) => {
+        setItems(items.filter(i => i.productId !== productId))
+    }
+
+    const calculateTotal = () => {
+        return items.reduce((acc, item) => {
+            const discountedPrice = item.unitPrice * (1 - item.discount / 100)
+            return acc + (discountedPrice * item.quantity)
+        }, 0)
+    }
+
+    const handleSubmit = async () => {
+        if (items.length === 0) {
+            alert('Agrega al menos un producto')
+            return
+        }
+        if (!selectedCustomer) {
+            alert('Selecciona un cliente')
+            return
+        }
+        if (!selectedSeller) {
+            alert('Selecciona un vendedor')
+            return
+        }
+
+        setLoading(true)
+        try {
+            // 1. Create invoice
+            const { data: invoice, error: invoiceError } = await supabase
+                .from('invoices')
+                .insert({
+                    customer_id: selectedCustomer.id,
+                    seller_id: selectedSeller,
+                    invoice_type: 'POS', // Important: POS type
+                    total: calculateTotal(),
+                    status: 'paid'
+                })
+                .select()
+                .single()
+
+            if (invoiceError) throw invoiceError
+
+            // 2. Create invoice items
+            const invoiceItems = items.map(item => ({
+                invoice_id: invoice.id,
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                discount_percentage: item.discount,
+                total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+            }))
+
+            const { error: itemsError } = await supabase
+                .from('invoice_items')
+                .insert(invoiceItems)
+
+            if (itemsError) throw itemsError
+
+            // 3. Update stock
+            for (const item of items) {
+                await supabase.rpc('decrement_stock', {
+                    row_id: item.productId,
+                    quantity: item.quantity
+                })
+            }
+
+            alert('¡Factura POS creada exitosamente!')
+            router.push('/dashboard/invoices/pos')
+        } catch (error: any) {
+            console.error('Error creating invoice:', error)
+            alert('Error al crear la factura: ' + error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="max-w-5xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Nueva Factura POS</h1>
+                    <p className="text-sm text-gray-600 mt-1">
+                        Factura legal - Reporta a DIAN
+                    </p>
+                </div>
+                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold text-sm">
+                    FACTURA LEGAL
+                </div>
+            </div>
+
+            {/* Customer and Seller Selection */}
+            <div className="grid grid-cols-2 gap-4">
+                {/* Customer */}
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                        <Users className="inline h-4 w-4 mr-1" />
+                        Cliente
+                    </label>
+                    <div className="relative">
+                        <div
+                            className="flex items-center justify-between p-2 border rounded-lg cursor-pointer hover:border-blue-400"
+                            onClick={() => setShowCustomerList(!showCustomerList)}
+                        >
+                            <div>
+                                <p className="font-medium">{selectedCustomer?.name || 'Seleccionar'}</p>
+                                {selectedCustomer && (
+                                    <p className="text-xs text-gray-500">{selectedCustomer.nit_cedula}</p>
+                                )}
+                            </div>
+                            <span className="text-blue-600 text-xs font-bold">Cambiar</span>
+                        </div>
+                        {showCustomerList && (
+                            <div className="absolute top-full left-0 w-full mt-1 bg-white border rounded-lg shadow-xl z-20 max-h-60 overflow-y-auto">
+                                <div className="p-2 sticky top-0 bg-white border-b">
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar..."
+                                        className="w-full p-2 border rounded-md text-sm"
+                                        value={customerSearch}
+                                        onChange={(e) => searchCustomers(e.target.value)}
+                                    />
+                                </div>
+                                {customers.map(c => (
+                                    <div
+                                        key={c.id}
+                                        onClick={() => {
+                                            setSelectedCustomer(c)
+                                            setShowCustomerList(false)
+                                            setCustomerSearch('')
+                                        }}
+                                        className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
+                                    >
+                                        <p className="font-medium text-sm">{c.name}</p>
+                                        <p className="text-xs text-gray-500">{c.nit_cedula}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Seller */}
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <SellerSelect
+                        value={selectedSeller}
+                        onChange={setSelectedSeller}
+                        disabled={!isAdmin}
+                        label="Vendedor Asignado"
+                    />
+                </div>
+            </div>
+
+            {/* Product Search */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Buscar Productos
+                </label>
+                <div className="relative">
+                    <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <input
+                        type="text"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg"
+                        placeholder="Buscar por nombre o SKU..."
+                        value={searchTerm}
+                        onChange={(e) => searchProducts(e.target.value)}
+                    />
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                    {products.map(product => (
+                        <button
+                            key={product.id}
+                            onClick={() => addProduct(product)}
+                            className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm"
+                        >
+                            <p className="font-medium truncate">{product.name}</p>
+                            <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Invoice Items */}
+            <div className="bg-white rounded-lg border border-gray-200">
+                <div className="p-4 border-b">
+                    <h3 className="font-bold text-gray-900">Productos en la Factura</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                    {items.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">
+                            No hay productos agregados
+                        </p>
+                    ) : (
+                        items.map(item => (
+                            <div key={item.productId} className="border rounded-lg p-3 space-y-2">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <h4 className="font-medium">{item.productName}</h4>
+                                        <p className="text-sm text-gray-600">
+                                            ${item.unitPrice.toLocaleString()} x {item.quantity} = ${(item.unitPrice * item.quantity * (1 - item.discount / 100)).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                                            className="w-20 px-2 py-1 border rounded text-center"
+                                        />
+                                        <button
+                                            onClick={() => removeItem(item.productId)}
+                                            className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <DiscountInput
+                                    value={item.discount}
+                                    unitPrice={item.unitPrice}
+                                    quantity={item.quantity}
+                                    onChange={(discount) => updateDiscount(item.productId, discount)}
+                                />
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Total and Submit */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
+                <div className="flex justify-between text-xl font-bold">
+                    <span>Total:</span>
+                    <span className="text-green-600">${calculateTotal().toLocaleString()}</span>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => router.back()}
+                        className="flex-1 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || items.length === 0}
+                        className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <Save className="h-5 w-5" />
+                        {loading ? 'Guardando...' : 'Crear Factura POS'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cartStore'
 import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DiscountInput } from '@/components/DiscountInput'
 
 export default function POSPage() {
     const [products, setProducts] = useState<any[]>([])
@@ -12,7 +13,7 @@ export default function POSPage() {
     const [loading, setLoading] = useState(false)
     const [processing, setProcessing] = useState(false)
 
-    const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCartStore()
+    const { items, addItem, removeItem, updateQuantity, updateDiscount, total, clearCart } = useCartStore()
 
     const [customers, setCustomers] = useState<any[]>([])
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
@@ -113,7 +114,8 @@ export default function POSPage() {
                 product_id: item.productId,
                 quantity: item.quantity,
                 unit_price: item.price,
-                total: item.price * item.quantity
+                discount_percentage: item.discount,
+                total: item.price * item.quantity * (1 - item.discount / 100)
             }))
 
             const { error: itemsError } = await supabase
@@ -255,32 +257,43 @@ export default function POSPage() {
                         </div>
                     ) : (
                         items.map((item) => (
-                            <div key={item.productId} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
-                                    <p className="text-blue-600 font-bold text-sm">${(item.price * item.quantity).toLocaleString()}</p>
+                            <div key={item.productId} className="bg-gray-50 p-3 rounded-lg space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
+                                        <p className="text-blue-600 font-bold text-sm">
+                                            ${(item.price * item.quantity * (1 - item.discount / 100)).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                                            className="p-1 rounded-full hover:bg-gray-200 text-gray-600"
+                                        >
+                                            <Minus className="h-4 w-4" />
+                                        </button>
+                                        <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                                        <button
+                                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                                            className="p-1 rounded-full hover:bg-gray-200 text-gray-600"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => removeItem(item.productId)}
+                                            className="p-1 rounded-full hover:bg-red-100 text-red-500 ml-2"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <button
-                                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                        className="p-1 rounded-full hover:bg-gray-200 text-gray-600"
-                                    >
-                                        <Minus className="h-4 w-4" />
-                                    </button>
-                                    <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
-                                    <button
-                                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                        className="p-1 rounded-full hover:bg-gray-200 text-gray-600"
-                                    >
-                                        <Plus className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => removeItem(item.productId)}
-                                        className="p-1 rounded-full hover:bg-red-100 text-red-500 ml-2"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
-                                </div>
+                                {/* Discount Input */}
+                                <DiscountInput
+                                    value={item.discount}
+                                    unitPrice={item.price}
+                                    quantity={item.quantity}
+                                    onChange={(newDiscount) => updateDiscount(item.productId, newDiscount)}
+                                />
                             </div>
                         ))
                     )}

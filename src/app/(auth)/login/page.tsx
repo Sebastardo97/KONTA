@@ -15,19 +15,37 @@ export default function LoginPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
+        console.log('🔐 Login attempt with:', email)
         setLoading(true)
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
-            if (error) throw error
+            console.log('📨 Supabase response:', { data, error })
 
+            if (error) {
+                console.error('❌ Login error:', error)
+                throw error
+            }
+
+            console.log('✅ Login successful! User:', data.user?.email)
+            console.log('🔄 Attempting redirect to /dashboard...')
+
+            // Try both methods to ensure redirect works
             router.push('/dashboard')
+
+            // Fallback: use window.location if router.push doesn't work
+            setTimeout(() => {
+                console.log('⏱️ Fallback redirect triggered')
+                window.location.href = '/dashboard'
+            }, 500)
+
         } catch (err: any) {
+            console.error('💥 Error:', err)
             setError(err.message)
         } finally {
             setLoading(false)

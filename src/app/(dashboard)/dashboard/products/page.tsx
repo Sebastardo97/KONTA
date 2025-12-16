@@ -53,11 +53,18 @@ export default function ProductsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         try {
-            const productData = {
-                ...formData,
+            // When editing, don't include stock in the update
+            const productData: any = {
+                code: formData.code,
+                name: formData.name,
+                description: formData.description,
                 price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
                 tax_rate: parseInt(formData.tax_rate)
+            }
+
+            // Only include stock when creating new product
+            if (!editingProduct) {
+                productData.stock = parseInt(formData.stock)
             }
 
             if (editingProduct) {
@@ -169,7 +176,7 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {loading ? (
                         <div className="p-12 text-center">
                             <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500 mb-3" />
@@ -221,8 +228,8 @@ export default function ProductsPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock > 10 ? 'bg-green-100 text-green-800' :
-                                                    product.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-red-100 text-red-800'
+                                                product.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-red-100 text-red-800'
                                                 }`}>
                                                 {product.stock} unidades
                                             </span>
@@ -253,7 +260,7 @@ export default function ProductsPage() {
                             <div className="absolute inset-0 bg-gray-900 opacity-25 backdrop-blur-sm"></div>
                         </div>
                         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="relative z-10 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                        <div className="relative z-10 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg md:max-w-2xl sm:w-full border border-gray-100">
                             <form onSubmit={handleSubmit}>
                                 <div className="bg-white px-6 pt-6 pb-4">
                                     <h3 className="text-xl font-bold text-gray-900 mb-1">
@@ -281,9 +288,24 @@ export default function ProductsPage() {
                                                 value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                                         </div>
                                         <div className="sm:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Stock Inicial</label>
-                                            <input type="number" required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                                value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} />
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                {editingProduct ? 'Stock Actual' : 'Cantidad'}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                required={!editingProduct}
+                                                disabled={!!editingProduct}
+                                                className={`block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${editingProduct ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+                                                    }`}
+                                                value={formData.stock}
+                                                onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                                placeholder={editingProduct ? 'No editable' : 'Cantidad inicial'}
+                                            />
+                                            {editingProduct && (
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    💡 Modifica stock desde entradas de inventario
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="sm:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">IVA %</label>
