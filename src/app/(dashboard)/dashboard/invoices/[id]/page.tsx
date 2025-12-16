@@ -33,12 +33,13 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
         try {
             setLoading(true)
 
-            // Fetch Invoice with Customer and Items
+            // Fetch Invoice with Customer, Seller, and Items
             const { data: invoiceData, error: invoiceError } = await supabase
                 .from('invoices')
                 .select(`
                     *,
                     customers (name, nit_cedula, address, phone, email),
+                    seller:profiles!seller_id (full_name),
                     invoice_items (
                         quantity,
                         unit_price,
@@ -164,7 +165,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                         </div>
                         <div className="flex justify-between pt-1">
                             <span className="font-bold">Vendedor:</span>
-                            <span className="uppercase">JHOVIAM</span> {/* Hardcoded based on image, ideally from seller profile */}
+                            <span className="uppercase">{invoice.seller?.full_name || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
