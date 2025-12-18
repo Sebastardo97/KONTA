@@ -49,24 +49,28 @@ export default function NewNormalInvoicePage() {
     }
 
     const updateQuantity = (productId: string, quantity: number) => {
-        if (quantity <= 0) {
-            setItems(items.filter(i => i.productId !== productId))
-        } else {
-            setItems(items.map(i => {
+        setItems(currentItems => {
+            if (quantity <= 0) {
+                return currentItems.filter(i => i.productId !== productId)
+            }
+
+            return currentItems.map(i => {
                 if (i.productId === productId) {
-                    // VALIDATION on update
-                    if (quantity > i.stock) {
+                    const currentStock = Number(i.stock ?? 0)
+
+                    // VALIDATION on update (Strict Check)
+                    if (quantity > currentStock) {
                         // Alert AFTER render to avoid confusing UI state
                         setTimeout(() => {
-                            alert(`⚠️ Solo hay ${i.stock} unidades disponibles de "${i.productName}"`)
+                            alert(`⚠️ Solo hay ${currentStock} unidades disponibles de "${i.productName}"`)
                         }, 0)
-                        return { ...i, quantity: i.stock } // Clamp to max stock
+                        return { ...i, quantity: currentStock } // Clamp to max stock
                     }
                     return { ...i, quantity }
                 }
                 return i
-            }))
-        }
+            })
+        })
     }
 
     const updateDiscount = (productId: string, discount: number) => {
