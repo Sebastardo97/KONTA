@@ -45,6 +45,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     customers (name, nit_cedula, address, phone, email),
                     seller:profiles!seller_id (full_name),
                     invoice_items (
+                        id,
                         quantity,
                         unit_price,
                         total,
