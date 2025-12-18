@@ -56,8 +56,11 @@ export default function NewNormalInvoicePage() {
                 if (i.productId === productId) {
                     // VALIDATION on update
                     if (quantity > i.stock) {
-                        alert(`⚠️ Solo hay ${i.stock} unidades disponibles de "${i.productName}"`)
-                        return i // Don't update
+                        // Alert AFTER render to avoid confusing UI state
+                        setTimeout(() => {
+                            alert(`⚠️ Solo hay ${i.stock} unidades disponibles de "${i.productName}"`)
+                        }, 0)
+                        return { ...i, quantity: i.stock } // Clamp to max stock
                     }
                     return { ...i, quantity }
                 }
