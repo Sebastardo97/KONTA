@@ -112,50 +112,30 @@ export default function NewNormalInvoicePage() {
     const confirmAndSubmit = async () => {
         setLoading(true)
         try {
-            // 1. Create invoice
-            const { data: invoice, error: invoiceError } = await supabase
-                .from('invoices')
-                .insert({
-                    customer_id: selectedCustomer.id,
-                    seller_id: selectedSeller,
-                    invoice_type: 'NORMAL', // Important: NORMAL type (not reported to DIAN)
-                    total: calculateTotal(),
-                    status: 'paid'
-                })
-                .select()
-                .single()
-
-            if (invoiceError) throw invoiceError
-
-            // 2. Create invoice items
-            const invoiceItems = items.map(item => ({
-                invoice_id: invoice.id,
+            // Prepare items payload for RPC
+            const rpcItems = items.map(item => ({
                 product_id: item.productId,
                 quantity: item.quantity,
                 unit_price: item.unitPrice,
-                discount_percentage: item.discount,
-                total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+                discount_percentage: item.discount || 0
             }))
 
-            const { error: itemsError } = await supabase
-                .from('invoice_items')
-                .insert(invoiceItems)
+            // Call atomic transaction function
+            const { data: invoiceId, error } = await supabase.rpc('create_pos_invoice', {
+                p_customer_id: selectedCustomer.id,
+                p_seller_id: selectedSeller,
+                p_items: rpcItems,
+                p_total: calculateTotal(),
+                p_invoice_type: 'NORMAL'
+            })
 
-            if (itemsError) throw itemsError
-
-            // 3. Update stock
-            for (const item of items) {
-                await supabase.rpc('decrement_stock', {
-                    row_id: item.productId,
-                    quantity: item.quantity
-                })
-            }
+            if (error) throw error
 
             alert('¡Factura Normal creada exitosamente!')
             router.push('/dashboard/invoices/normal')
         } catch (error: any) {
             console.error('Error creating invoice:', error)
-            alert('Error al crear la factura: ' + error.message)
+            alert('Error al crear la factura: ' + (error.message || 'Error desconocido'))
         } finally {
             setLoading(false)
         }
@@ -296,6 +276,7 @@ export default function NewNormalInvoicePage() {
                                         <input
                                             type="number"
                                             min="1"
+                                            max={item.stock}
                                             value={item.quantity}
                                             onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
                                             className="w-20 px-2 py-1 border rounded text-center"
