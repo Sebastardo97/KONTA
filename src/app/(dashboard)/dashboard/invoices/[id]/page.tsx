@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Printer, ArrowLeft } from 'lucide-react'
+import { Loader2, Printer, ArrowLeft, RotateCcw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import ReturnModal from '@/components/returns/ReturnModal'
+import { getCreditNotesByInvoice } from '@/lib/returns'
 
 // Helper to format currency
 const formatCurrency = (amount: number) => {
@@ -17,6 +19,8 @@ const formatCurrency = (amount: number) => {
 export default function InvoiceDetailsPage({ params }: { params: { id: string } }) {
     const [invoice, setInvoice] = useState<any>(null)
     const [company, setCompany] = useState<any>(null)
+    const [creditNotes, setCreditNotes] = useState<any[]>([])
+    const [isReturnModalOpen, setIsReturnModalOpen] = useState(false)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
 
@@ -52,6 +56,10 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
 
             if (invoiceError) throw invoiceError
             setInvoice(invoiceData)
+
+            // Fetch Credit Notes
+            const creditNotesData = await getCreditNotesByInvoice(params.id)
+            setCreditNotes(creditNotesData || [])
 
             // Fetch Company Settings (for header)
             const { data: companyData } = await supabase
@@ -97,13 +105,24 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Volver
                 </button>
-                <button
-                    onClick={handlePrint}
-                    className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                    <Printer className="h-4 w-4 mr-2" />
-                    Imprimir / Descargar PDF
-                </button>
+                <div className="flex gap-2">
+                    {invoice.status !== 'cancelled' && invoice.status !== 'draft' && (
+                        <button
+                            onClick={() => setIsReturnModalOpen(true)}
+                            className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 transition-colors shadow-sm"
+                        >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Devolución
+                        </button>
+                    )}
+                    <button
+                        onClick={handlePrint}
+                        className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Imprimir / Descargar PDF
+                    </button>
+                </div>
             </div>
 
             {/* Receipt Container - This part gets printed */}
@@ -213,6 +232,66 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     NOTA: DESPUES DE 8 DIAS NO SE ACEPTAN DEVOLUCIONES
                 </div>
             </div>
-        </div>
+
+
+            {/* Credit Notes Section */}
+            {
+                creditNotes.length > 0 && (
+                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 print:hidden">
+                        <h2 className="text-xl font-bold mb-4">Notas Crédito (Devoluciones)</h2>
+                        <div className="space-y-4">
+                            {creditNotes.map((note) => (
+                                <div key={note.id} className="border rounded-lg p-4 bg-gray-50">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-gray-800">Nota Crédito #{note.number}</h3>
+                                            <p className="text-sm text-gray-600">Fecha: {new Date(note.created_at).toLocaleDateString()}</p>
+                                            <p className="text-sm text-gray-600">Razón: {note.reason}</p>
+                                            <p className="text-xs text-gray-500 mt-1">Procesado por: {note.created_by_user?.email}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-lg font-bold text-red-600">
+                                                -{formatCurrency(note.total)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 border-t border-gray-200 pt-2">
+                                        <table className="w-full text-xs">
+                                            <thead>
+                                                <tr>
+                                                    <th className="text-left font-medium text-gray-500">Producto</th>
+                                                    <th className="text-right font-medium text-gray-500">Cant</th>
+                                                    <th className="text-right font-medium text-gray-500">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {note.credit_note_items.map((item: any) => (
+                                                    <tr key={item.id}>
+                                                        <td className="py-1">{item.products?.name}</td>
+                                                        <td className="text-right">{item.quantity}</td>
+                                                        <td className="text-right">{formatCurrency(item.total)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+
+            <ReturnModal
+                isOpen={isReturnModalOpen}
+                onClose={() => setIsReturnModalOpen(false)}
+                onSuccess={() => {
+                    fetchData()
+                    // Optional: Show success toast
+                }}
+                invoiceId={invoice.id}
+                items={invoice.invoice_items}
+            />
+        </div >
     )
 }

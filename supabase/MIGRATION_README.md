@@ -8,6 +8,7 @@ These SQL migrations must be executed in the following order on your Supabase da
 2. **invoice_enhancements.sql** - Adds invoice types, discounts, and customer improvements  
 3. **sales_orders.sql** - Creates sales orders (pre-sales) system
 4. **seller_performance.sql** - Creates performance tracking views and functions
+5. **returns_schema.sql** - Creates tables and functions for returns and credit notes
 
 ## How to Run
 
