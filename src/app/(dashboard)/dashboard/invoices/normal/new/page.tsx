@@ -261,7 +261,12 @@ export default function NewNormalInvoicePage() {
                             className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm"
                         >
                             <p className="font-medium truncate">{product.name}</p>
-                            <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
+                            <div className="flex justify-between items-center w-full mt-1">
+                                <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
+                                <span className={`text-xs px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    {product.stock} und
+                                </span>
+                            </div>
                         </button>
                     ))}
                 </div>
