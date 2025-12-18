@@ -35,8 +35,7 @@ export async function getCreditNotesByInvoice(invoiceId: string) {
             credit_note_items (
                 *,
                 products (name)
-            ),
-            created_by_user:created_by (email)
+            )
         `)
         .eq('invoice_id', invoiceId)
         .order('created_at', { ascending: false })

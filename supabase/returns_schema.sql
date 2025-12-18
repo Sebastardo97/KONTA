@@ -29,17 +29,25 @@ ALTER TABLE credit_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE credit_note_items ENABLE ROW LEVEL SECURITY;
 
 -- Read policies (similar to invoices)
+DROP POLICY IF EXISTS "Public read access" ON credit_notes;
 CREATE POLICY "Public read access" ON credit_notes FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public read access" ON credit_note_items;
 CREATE POLICY "Public read access" ON credit_note_items FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Write policies (only authenticated users, ideally sellers/admins)
-CREATE POLICY "Authenticated insert" ON credit_notes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Authenticated insert" ON credit_note_items FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- STRICTER: Only allow inserts via the secure function or admin
+DROP POLICY IF EXISTS "Authenticated insert" ON credit_notes;
+CREATE POLICY "Authenticated insert" ON credit_notes FOR INSERT WITH CHECK (is_admin() OR is_seller());
+
+DROP POLICY IF EXISTS "Authenticated insert" ON credit_note_items;
+CREATE POLICY "Authenticated insert" ON credit_note_items FOR INSERT WITH CHECK (is_admin() OR is_seller());
 
 -- FUNCTION: Process Return
--- 1. Creates Credit Note
--- 2. Creates Credit Note Items
--- 3. Increments Stock
+-- 1. Validates return quantity against original invoice
+-- 2. Creates Credit Note
+-- 3. Creates Credit Note Items
+-- 4. Increments Stock
 CREATE OR REPLACE FUNCTION process_return(
   p_invoice_id UUID,
   p_items JSONB, -- Array of objects: { product_id, quantity, unit_price }
@@ -52,15 +60,45 @@ DECLARE
   v_total NUMERIC := 0;
   v_item JSONB;
   v_item_total NUMERIC;
-  v_current_stock INTEGER;
+  v_purchased_qty INTEGER;
+  v_previously_returned_qty INTEGER;
+  v_return_qty INTEGER;
+  v_product_id UUID;
 BEGIN
-  -- Calculate total from items
+  -- VALIDATION PHASE
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
   LOOP
-    v_item_total := (v_item->>'quantity')::NUMERIC * (v_item->>'unit_price')::NUMERIC;
+    v_product_id := (v_item->>'product_id')::UUID;
+    v_return_qty := (v_item->>'quantity')::INTEGER;
+
+    -- 1. Get original purchased quantity
+    SELECT quantity INTO v_purchased_qty
+    FROM invoice_items
+    WHERE invoice_id = p_invoice_id AND product_id = v_product_id;
+
+    IF v_purchased_qty IS NULL THEN
+        RAISE EXCEPTION 'Product % not found in this invoice', v_product_id;
+    END IF;
+
+    -- 2. Get previously returned quantity
+    SELECT COALESCE(SUM(quantity), 0) INTO v_previously_returned_qty
+    FROM credit_note_items cni
+    JOIN credit_notes cn ON cn.id = cni.credit_note_id
+    WHERE cn.invoice_id = p_invoice_id AND cni.product_id = v_product_id;
+
+    -- 3. Check if return is valid
+    IF (v_previously_returned_qty + v_return_qty) > v_purchased_qty THEN
+        RAISE EXCEPTION 'Return quantity exceeds purchased quantity. Purchased: %, Returned: %, Trying to return: %', 
+            v_purchased_qty, v_previously_returned_qty, v_return_qty;
+    END IF;
+
+    -- Calculate total
+    v_item_total := v_return_qty::NUMERIC * (v_item->>'unit_price')::NUMERIC;
     v_total := v_total + v_item_total;
   END LOOP;
 
+  -- EXECUTION PHASE
+  
   -- Create Credit Note
   INSERT INTO credit_notes (
     invoice_id,
@@ -77,7 +115,9 @@ BEGIN
   -- Process Items
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
   LOOP
-    v_item_total := (v_item->>'quantity')::NUMERIC * (v_item->>'unit_price')::NUMERIC;
+    v_product_id := (v_item->>'product_id')::UUID;
+    v_return_qty := (v_item->>'quantity')::INTEGER;
+    v_item_total := v_return_qty::NUMERIC * (v_item->>'unit_price')::NUMERIC;
 
     -- Create Credit Note Item
     INSERT INTO credit_note_items (
@@ -88,17 +128,16 @@ BEGIN
       total
     ) VALUES (
       v_credit_note_id,
-      (v_item->>'product_id')::UUID,
-      (v_item->>'quantity')::INTEGER,
+      v_product_id,
+      v_return_qty,
       (v_item->>'unit_price')::NUMERIC,
       v_item_total
     );
 
     -- Increment Stock
-    -- We assume increment_stock function exists (checked previously)
     PERFORM increment_stock(
-        (v_item->>'product_id')::UUID, 
-        (v_item->>'quantity')::INTEGER
+        v_product_id, 
+        v_return_qty
     );
     
   END LOOP;
