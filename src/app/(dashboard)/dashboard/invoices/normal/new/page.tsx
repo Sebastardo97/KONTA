@@ -15,83 +15,11 @@ type InvoiceItem = {
     quantity: number
     unitPrice: number
     discount: number
+    stock: number // [NEW] Added for validation
 }
 
 export default function NewNormalInvoicePage() {
-    const router = useRouter()
-    const { isAdmin, userId } = useRole()
-
-    const [products, setProducts] = useState<any[]>([])
-    const [customers, setCustomers] = useState<any[]>([])
-    const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-    const [selectedSeller, setSelectedSeller] = useState<string>('')
-    const [items, setItems] = useState<InvoiceItem[]>([])
-    const [searchTerm, setSearchTerm] = useState('')
-    const [customerSearch, setCustomerSearch] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [showConfirmModal, setShowConfirmModal] = useState(false)
-    const [sellerName, setSellerName] = useState('')
-    const [showCustomerList, setShowCustomerList] = useState(false)
-
-    useEffect(() => {
-        fetchProducts()
-        fetchCustomers()
-        // If not admin, auto-set seller to current user
-        if (!isAdmin && userId) {
-            setSelectedSeller(userId)
-        }
-    }, [isAdmin, userId])
-
-    const fetchProducts = async () => {
-        const { data } = await supabase
-            .from('products')
-            .select('*')
-            .order('name')
-            .limit(50)
-        if (data) setProducts(data)
-    }
-
-    const fetchCustomers = async () => {
-        const { data } = await supabase
-            .from('customers')
-            .select('*')
-            .order('name')
-            .limit(10)
-        if (data) {
-            setCustomers(data)
-            const general = data.find(c => c.name === 'Cliente General')
-            setSelectedCustomer(general || data[0])
-        }
-    }
-
-    const searchProducts = async (term: string) => {
-        setSearchTerm(term)
-        if (term.length > 2) {
-            const { data } = await supabase
-                .from('products')
-                .select('*')
-                .or(`name.ilike.%${term}%,sku.ilike.%${term}%`)
-                .limit(10)
-            if (data) setProducts(data)
-        } else if (term.length === 0) {
-            fetchProducts()
-        }
-    }
-
-    const searchCustomers = async (term: string) => {
-        setCustomerSearch(term)
-        setShowCustomerList(true)
-        if (term.length > 1) {
-            const { data } = await supabase
-                .from('customers')
-                .select('*')
-                .or(`name.ilike.%${term}%,nit_cedula.ilike.%${term}%`)
-                .limit(5)
-            if (data) setCustomers(data)
-        } else {
-            fetchCustomers()
-        }
-    }
+    // ... existing code ...
 
     const addProduct = (product: any) => {
         // VALIDATION: Check stock before adding
@@ -114,7 +42,8 @@ export default function NewNormalInvoicePage() {
                 productName: product.name,
                 quantity: 1,
                 unitPrice: product.price,
-                discount: 0
+                discount: 0,
+                stock: product.stock // Store stock limit
             }])
         }
     }
@@ -123,9 +52,17 @@ export default function NewNormalInvoicePage() {
         if (quantity <= 0) {
             setItems(items.filter(i => i.productId !== productId))
         } else {
-            setItems(items.map(i =>
-                i.productId === productId ? { ...i, quantity } : i
-            ))
+            setItems(items.map(i => {
+                if (i.productId === productId) {
+                    // VALIDATION on update
+                    if (quantity > i.stock) {
+                        alert(`⚠️ Solo hay ${i.stock} unidades disponibles de "${i.productName}"`)
+                        return i // Don't update
+                    }
+                    return { ...i, quantity }
+                }
+                return i
+            }))
         }
     }
 
