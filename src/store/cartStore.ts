@@ -38,8 +38,10 @@ export const useCartStore = create<CartState>((set, get) => ({
                     if (item.productId === product.id) {
                         const newQuantity = item.quantity + 1
                         if (newQuantity > item.stock) {
-                            alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
-                            return item
+                            setTimeout(() => {
+                                alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
+                            }, 0)
+                            return item // Stay at max, don't increase
                         }
                         return { ...item, quantity: newQuantity }
                     }
@@ -72,8 +74,10 @@ export const useCartStore = create<CartState>((set, get) => ({
             items: get().items.map(item => {
                 if (item.productId === productId) {
                     if (quantity > item.stock) {
-                        alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
-                        return item
+                        setTimeout(() => {
+                            alert(`⚠️ Solo hay ${item.stock} unidades disponibles de "${item.name}"`)
+                        }, 0)
+                        return { ...item, quantity: item.stock } // Clamp to max
                     }
                     return { ...item, quantity }
                 }

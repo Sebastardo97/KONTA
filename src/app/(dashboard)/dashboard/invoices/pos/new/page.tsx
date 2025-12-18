@@ -15,6 +15,7 @@ type InvoiceItem = {
     quantity: number
     unitPrice: number
     discount: number
+    stock: number // [NEW] Added for validation
 }
 
 export default function NewPOSInvoicePage() {
@@ -114,19 +115,35 @@ export default function NewPOSInvoicePage() {
                 productName: product.name,
                 quantity: 1,
                 unitPrice: product.price,
-                discount: 0
+                discount: 0,
+                stock: product.stock // Store stock limit
             }])
         }
     }
 
     const updateQuantity = (productId: string, quantity: number) => {
-        if (quantity <= 0) {
-            setItems(items.filter(i => i.productId !== productId))
-        } else {
-            setItems(items.map(i =>
-                i.productId === productId ? { ...i, quantity } : i
-            ))
-        }
+        setItems(currentItems => {
+            if (quantity <= 0) {
+                return currentItems.filter(i => i.productId !== productId)
+            }
+
+            return currentItems.map(i => {
+                if (i.productId === productId) {
+                    const currentStock = Number(i.stock ?? 0)
+
+                    // VALIDATION on update (Strict Check)
+                    if (quantity > currentStock) {
+                        // Alert AFTER render to avoid confusing UI state
+                        setTimeout(() => {
+                            alert(`⚠️ Solo hay ${currentStock} unidades disponibles de "${i.productName}"`)
+                        }, 0)
+                        return { ...i, quantity: currentStock } // Clamp to max stock
+                    }
+                    return { ...i, quantity }
+                }
+                return i
+            })
+        })
     }
 
     const updateDiscount = (productId: string, discount: number) => {
@@ -341,6 +358,7 @@ export default function NewPOSInvoicePage() {
                                         <input
                                             type="number"
                                             min="1"
+                                            max={item.stock}
                                             value={item.quantity}
                                             onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
                                             className="w-20 px-2 py-1 border rounded text-center"
