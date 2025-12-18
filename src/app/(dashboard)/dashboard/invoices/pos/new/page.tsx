@@ -175,69 +175,31 @@ export default function NewPOSInvoicePage() {
     const confirmAndSubmit = async () => {
         setLoading(true)
         try {
-            // CRITICAL: Decrement stock FIRST before creating invoice
-            // If stock fails, no invoice is created (no orphaned data)
-            for (const item of items) {
-                const { error: stockError } = await supabase.rpc('decrement_stock', {
-                    row_id: item.productId,
-                    quantity: item.quantity
-                })
+            // Get current user id for seller_id if needed, though we have selectedSeller state
+            // Re-verifying user session is good practice
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('No user logged in')
 
-                if (stockError) {
-                    // Stock error - restore previously decremented items
-                    throw new Error(`Error de stock: ${stockError.message}`)
-                }
-            }
+            const finalSellerId = isAdmin ? selectedSeller : user.id
 
-            // 1. Create invoice (only after stock is confirmed)
-            const { data: invoice, error: invoiceError } = await supabase
-                .from('invoices')
-                .insert({
-                    customer_id: selectedCustomer.id,
-                    seller_id: selectedSeller,
-                    invoice_type: 'POS',
-                    total: calculateTotal(),
-                    status: 'paid'
-                })
-                .select()
-                .single()
-
-            if (invoiceError) {
-                // Invoice creation failed - restore stock
-                for (const item of items) {
-                    await supabase.rpc('increment_stock', {
-                        row_id: item.productId,
-                        quantity: item.quantity
-                    })
-                }
-                throw invoiceError
-            }
-
-            // 2. Create invoice items
-            const invoiceItems = items.map(item => ({
-                invoice_id: invoice.id,
+            // Prepare items for RPC
+            const rpcItems = items.map(item => ({
                 product_id: item.productId,
                 quantity: item.quantity,
                 unit_price: item.unitPrice,
-                discount_percentage: item.discount,
-                total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+                discount_percentage: item.discount
             }))
 
-            const { error: itemsError } = await supabase
-                .from('invoice_items')
-                .insert(invoiceItems)
+            // Call atomic RPC function
+            const { data: invoiceId, error } = await supabase.rpc('create_pos_invoice', {
+                p_customer_id: selectedCustomer.id,
+                p_seller_id: finalSellerId,
+                p_items: rpcItems,
+                p_total: calculateTotal() * 1.19, // Total including tax
+                p_invoice_type: 'POS'
+            })
 
-            if (itemsError) {
-                // Items creation failed - delete invoice and restore stock
-                await supabase.from('invoices').delete().eq('id', invoice.id)
-                for (const item of items) {
-                    await supabase.rpc('increment_stock', {
-                        row_id: item.productId,
-                        quantity: item.quantity
-                    })
-                }
-                throw itemsError
-            }
+            if (error) throw error
 
             alert('¡Factura POS creada exitosamente!')
             router.push('/dashboard/invoices/pos')

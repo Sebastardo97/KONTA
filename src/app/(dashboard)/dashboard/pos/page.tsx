@@ -105,89 +105,47 @@ export default function POSPage() {
         setShowConfirmModal(true)
     }
 
-    const processCheckout = async () => {
-        if (items.length === 0) return
-        setProcessing(true)
+    if (items.length === 0) return
+    setProcessing(true)
 
-        try {
-            // 1. Create Invoice
-            const { data: user } = await supabase.auth.getUser()
-            if (!user.user) throw new Error('No user logged in')
+    try {
+        const { data: user } = await supabase.auth.getUser()
+        if (!user.user) throw new Error('No user logged in')
 
-            if (!selectedCustomer) {
-                alert('Por favor selecciona un cliente')
-                setProcessing(false)
-                return
-            }
-
-            // Decrement Stock FIRST
-            for (const item of items) {
-                const { error: stockError } = await supabase.rpc('decrement_stock', {
-                    row_id: item.productId,
-                    quantity: item.quantity
-                })
-                if (stockError) throw new Error(`Error de stock: ${stockError.message}`)
-            }
-
-            const { data: invoice, error: invoiceError } = await supabase
-                .from('invoices')
-                .insert({
-                    seller_id: user.user.id,
-                    customer_id: selectedCustomer.id,
-                    total: total(),
-                    status: 'paid',
-                    invoice_type: 'POS'
-                })
-                .select()
-                .single()
-
-            if (invoiceError) {
-                // Restore stock if invoice fails
-                for (const item of items) {
-                    await supabase.rpc('increment_stock', {
-                        row_id: item.productId,
-                        quantity: item.quantity
-                    })
-                }
-                throw invoiceError
-            }
-
-            // 2. Create Invoice Items
-            const invoiceItems = items.map(item => ({
-                invoice_id: invoice.id,
-                product_id: item.productId,
-                quantity: item.quantity,
-                unit_price: item.price,
-                discount_percentage: item.discount,
-                total: item.price * item.quantity * (1 - item.discount / 100)
-            }))
-
-            const { error: itemsError } = await supabase
-                .from('invoice_items')
-                .insert(invoiceItems)
-
-            if (itemsError) {
-                // Clean up if items fail
-                await supabase.from('invoices').delete().eq('id', invoice.id)
-                for (const item of items) {
-                    await supabase.rpc('increment_stock', {
-                        row_id: item.productId,
-                        quantity: item.quantity
-                    })
-                }
-                throw itemsError
-            }
-
-            alert('¡Venta realizada con éxito!')
-            clearCart()
-            fetchProducts()
-            setShowConfirmModal(false)
-        } catch (error: any) {
-            console.error('Checkout error:', error)
-            alert('Error al procesar la venta: ' + error.message)
-        } finally {
+        if (!selectedCustomer) {
+            alert('Por favor selecciona un cliente')
             setProcessing(false)
+            return
         }
+
+        // Prepare items for RPC
+        const rpcItems = items.map(item => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            unit_price: item.price,
+            discount_percentage: item.discount
+        }))
+
+        // Call atomic RPC function
+        const { data: invoiceId, error } = await supabase.rpc('create_pos_invoice', {
+            p_customer_id: selectedCustomer.id,
+            p_seller_id: user.user.id,
+            p_items: rpcItems,
+            p_total: total() * 1.19, // Total including tax
+            p_invoice_type: 'POS'
+        })
+
+        if (error) throw error
+
+        alert('¡Venta realizada con éxito!')
+        clearCart()
+        fetchProducts() // Refresh stock display
+        setShowConfirmModal(false)
+    } catch (error: any) {
+        console.error('Checkout error:', error)
+        alert('Error al procesar la venta: ' + error.message)
+    } finally {
+        setProcessing(false)
     }
 
     return (
