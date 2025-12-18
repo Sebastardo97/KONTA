@@ -85,13 +85,19 @@ export async function middleware(req: NextRequest) {
 
     // If there's a session, check role-based access
     if (session) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
+        // OPTIMIZATION: Check metadata first to avoid DB call
+        let userRole = session.user.user_metadata?.role
 
-        const userRole = profile?.role
+        // Fallback: If no role in metadata, fetch from DB (and maybe log warning)
+        if (!userRole) {
+            console.warn('⚠️ Role missing in metadata for user:', session.user.email)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single()
+            userRole = profile?.role
+        }
 
         // Check if trying to access admin-only route
         const isAdminRoute = ADMIN_ROUTES.some((route) =>
