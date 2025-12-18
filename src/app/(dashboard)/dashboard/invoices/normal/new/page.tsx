@@ -19,7 +19,58 @@ type InvoiceItem = {
 }
 
 export default function NewNormalInvoicePage() {
-    // ... existing code ...
+    const [items, setItems] = useState<InvoiceItem[]>([])
+    const [searchTerm, setSearchTerm] = useState('')
+    const [products, setProducts] = useState<any[]>([])
+    const [customers, setCustomers] = useState<any[]>([])
+    const [customerSearch, setCustomerSearch] = useState('')
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+    const [showCustomerList, setShowCustomerList] = useState(false)
+    const [selectedSeller, setSelectedSeller] = useState('')
+    const [sellerName, setSellerName] = useState('')
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const router = useRouter()
+    const { isAdmin, userId } = useRole()
+
+    useEffect(() => {
+        if (userId && !selectedSeller) {
+            setSelectedSeller(userId)
+        }
+    }, [userId])
+
+    // Fetch initial data
+    useEffect(() => {
+        fetchProducts()
+        fetchCustomers()
+    }, [])
+
+    const fetchProducts = async (term = '') => {
+        let query = supabase.from('products').select('*').limit(50)
+        if (term) query = query.ilike('name', `%${term}%`)
+
+        const { data } = await query
+        if (data) setProducts(data)
+    }
+
+    const searchProducts = (term: string) => {
+        setSearchTerm(term)
+        fetchProducts(term)
+    }
+
+    const fetchCustomers = async (term = '') => {
+        let query = supabase.from('customers').select('*').limit(50)
+        if (term) query = query.or(`name.ilike.%${term}%,nit_cedula.ilike.%${term}%`)
+
+        const { data } = await query
+        if (data) setCustomers(data)
+    }
+
+    const searchCustomers = (term: string) => {
+        setCustomerSearch(term)
+        fetchCustomers(term)
+    }
 
     const addProduct = (product: any) => {
         // VALIDATION: Check stock before adding
