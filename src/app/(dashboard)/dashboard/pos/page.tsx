@@ -105,47 +105,49 @@ export default function POSPage() {
         setShowConfirmModal(true)
     }
 
-    if (items.length === 0) return
-    setProcessing(true)
+    const processCheckout = async () => {
+        if (items.length === 0) return
+        setProcessing(true)
 
-    try {
-        const { data: user } = await supabase.auth.getUser()
-        if (!user.user) throw new Error('No user logged in')
+        try {
+            const { data: user } = await supabase.auth.getUser()
+            if (!user.user) throw new Error('No user logged in')
 
-        if (!selectedCustomer) {
-            alert('Por favor selecciona un cliente')
+            if (!selectedCustomer) {
+                alert('Por favor selecciona un cliente')
+                setProcessing(false)
+                return
+            }
+
+            // Prepare items for RPC
+            const rpcItems = items.map(item => ({
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: item.price,
+                discount_percentage: item.discount
+            }))
+
+            // Call atomic RPC function
+            const { data: invoiceId, error } = await supabase.rpc('create_pos_invoice', {
+                p_customer_id: selectedCustomer.id,
+                p_seller_id: user.user.id,
+                p_items: rpcItems,
+                p_total: total() * 1.19, // Total including tax
+                p_invoice_type: 'POS'
+            })
+
+            if (error) throw error
+
+            alert('¡Venta realizada con éxito!')
+            clearCart()
+            fetchProducts() // Refresh stock display
+            setShowConfirmModal(false)
+        } catch (error: any) {
+            console.error('Checkout error:', error)
+            alert('Error al procesar la venta: ' + error.message)
+        } finally {
             setProcessing(false)
-            return
         }
-
-        // Prepare items for RPC
-        const rpcItems = items.map(item => ({
-            product_id: item.productId,
-            quantity: item.quantity,
-            unit_price: item.price,
-            discount_percentage: item.discount
-        }))
-
-        // Call atomic RPC function
-        const { data: invoiceId, error } = await supabase.rpc('create_pos_invoice', {
-            p_customer_id: selectedCustomer.id,
-            p_seller_id: user.user.id,
-            p_items: rpcItems,
-            p_total: total() * 1.19, // Total including tax
-            p_invoice_type: 'POS'
-        })
-
-        if (error) throw error
-
-        alert('¡Venta realizada con éxito!')
-        clearCart()
-        fetchProducts() // Refresh stock display
-        setShowConfirmModal(false)
-    } catch (error: any) {
-        console.error('Checkout error:', error)
-        alert('Error al procesar la venta: ' + error.message)
-    } finally {
-        setProcessing(false)
     }
 
     return (
