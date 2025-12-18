@@ -50,6 +50,7 @@ export default function NewNormalInvoicePage() {
 
     const updateQuantity = (productId: string, quantity: number) => {
         setItems(currentItems => {
+            // Remove item if quantity is 0 or less
             if (quantity <= 0) {
                 return currentItems.filter(i => i.productId !== productId)
             }
@@ -58,13 +59,12 @@ export default function NewNormalInvoicePage() {
                 if (i.productId === productId) {
                     const currentStock = Number(i.stock ?? 0)
 
-                    // VALIDATION on update (Strict Check)
+                    // STRICT VALIDATION: Clamp to max stock
                     if (quantity > currentStock) {
-                        // Alert AFTER render to avoid confusing UI state
-                        setTimeout(() => {
-                            alert(`⚠️ Solo hay ${currentStock} unidades disponibles de "${i.productName}"`)
-                        }, 0)
-                        return { ...i, quantity: currentStock } // Clamp to max stock
+                        // Alert immediately
+                        alert(`⚠️ Solo hay ${currentStock} unidades disponibles de "${i.productName}"`)
+                        // Return with max stock
+                        return { ...i, quantity: currentStock }
                     }
                     return { ...i, quantity }
                 }
