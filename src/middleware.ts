@@ -106,7 +106,6 @@ export async function middleware(req: NextRequest) {
 
         // If seller trying to access admin route, redirect to their dashboard
         if (isAdminRoute && userRole === 'seller') {
-            console.log(`Seller blocked from accessing: ${req.nextUrl.pathname}`)
             return NextResponse.redirect(new URL('/dashboard/pos', req.url))
         }
 

@@ -10,9 +10,18 @@ export type CartItem = {
     discount: number // Discount percentage (0-100)
 }
 
+// Define the shape of the product coming from the DB/API
+export interface Product {
+    id: string
+    name: string
+    price: number
+    stock: number | null
+    tax_rate?: number
+}
+
 type CartState = {
     items: CartItem[]
-    addItem: (product: any) => void
+    addItem: (product: Product) => void
     removeItem: (productId: string) => void
     updateQuantity: (productId: string, quantity: number) => void
     updateDiscount: (productId: string, discount: number) => void

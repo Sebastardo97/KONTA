@@ -40,7 +40,6 @@ export function useRole(): UseRoleReturn {
 
                 // OPTIMIZATION: Check metadata first
                 if (user.user_metadata?.role) {
-                    console.log('⚡ Role loaded from metadata:', user.user_metadata.role)
                     setRole(user.user_metadata.role as UserRole)
                     setLoading(false)
                     return
@@ -59,7 +58,6 @@ export function useRole(): UseRoleReturn {
                     return
                 }
 
-                console.log('✅ User role fetched from DB:', profile.role)
                 setRole(profile.role as UserRole)
             } catch (error) {
                 console.error('Error in useRole:', error)
