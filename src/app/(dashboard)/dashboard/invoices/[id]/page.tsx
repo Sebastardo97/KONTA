@@ -46,6 +46,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                     seller:profiles!seller_id (full_name),
                     invoice_items (
                         id,
+                        product_id,
                         quantity,
                         unit_price,
                         total,
