@@ -146,7 +146,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                         {company.city && <p className="text-xs text-gray-600 uppercase">{company.city}</p>}
                         {/* Subtext mimicking the photo */}
                         <p className="text-[10px] text-gray-500 mt-1 uppercase w-64 leading-tight">
-                            Cliente: Bernardo Antonio Zuluaga Zuluaga
+                            Cliente: {invoice.customers?.name || 'Cliente'}
                         </p>
                     </div>
 
