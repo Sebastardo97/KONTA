@@ -73,9 +73,9 @@ export default function CustomersPage() {
             setEditingCustomer(null)
             setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '', city: '' })
             fetchCustomers()
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving customer:', error)
-            alert('Error al guardar el cliente')
+            alert(`Error al guardar el cliente: ${error.message || 'Error desconocido'}`)
         }
     }
 
