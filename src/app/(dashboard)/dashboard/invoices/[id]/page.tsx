@@ -50,7 +50,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                         quantity,
                         unit_price,
                         total,
-                        products (name)
+                        products (name, sku)
                     )
                 `)
                 .eq('id', params.id)
@@ -127,88 +127,103 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                 </div>
             </div>
 
-            {/* Receipt Container - This part gets printed */}
+            {/* Receipt Container - "Remisión" Style */}
             <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 print:shadow-none print:border-none print:p-0 text-sm font-sans text-gray-800">
 
-                {/* Header */}
-                <div className="flex justify-between items-start mb-8 border-b pb-6">
+                {/* Header Section */}
+                <div className="flex justify-between items-start mb-6">
+                    {/* Left: Company Info */}
                     <div className="space-y-1">
-                        {/* Logo can go here if we have one, using text for now based on image */}
-                        <h1 className="text-3xl font-script font-bold text-gray-600 italic">
+                        <h1 className="text-2xl font-bold text-gray-800 uppercase tracking-tight">
                             {company.name || 'Orchis accesorios'}
                         </h1>
-                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">
+                        <p className="text-xs text-gray-600 font-bold">
                             {company.address || 'DIRECCIÓN NO REGISTRADA'}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-600">
                             TEL: {company.phone}
                         </p>
-                        {company.city && <p className="text-xs text-gray-500">{company.city}</p>}
+                        {company.city && <p className="text-xs text-gray-600 uppercase">{company.city}</p>}
+                        {/* Subtext mimicking the photo */}
+                        <p className="text-[10px] text-gray-500 mt-1 uppercase w-64 leading-tight">
+                            Cliente: Bernardo Antonio Zuluaga Zuluaga
+                        </p>
                     </div>
-                    <div className="text-right border border-gray-300 rounded-lg p-3 bg-gray-50">
-                        <h2 className="text-sm font-bold text-gray-700 mb-1">* REMISIÓN *</h2>
-                        <p className="text-xl font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
+
+                    {/* Right: Remission Box */}
+                    <div className="border border-gray-300 rounded-lg overflow-hidden w-64">
+                        <div className="bg-gray-50 border-b border-gray-300 p-2 text-center">
+                            <h2 className="text-sm font-bold text-gray-700">* REMISIÓN *</h2>
+                        </div>
+                        <div className="p-3 text-center">
+                            <p className="text-2xl font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
+                        </div>
+                        <div className="bg-gray-50 border-t border-gray-300 p-2 flex justify-between text-[10px] text-gray-600">
+                            <span>Fecha: {new Date(invoice.created_at).toLocaleDateString()}</span>
+                            <span>Vence: {new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString()}</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Customer & Info Grid */}
-                <div className="grid grid-cols-2 gap-8 mb-8 text-xs">
-                    {/* Customer Info */}
-                    <div className="space-y-1">
+                {/* Customer Info Box */}
+                <div className="border-t border-b border-gray-200 py-4 mb-6">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs">
                         <div className="flex">
-                            <span className="font-bold w-16">Cliente:</span>
-                            <span className="uppercase">{invoice.customers?.name}</span>
+                            <span className="font-bold w-20 text-gray-600">CLIENTE:</span>
+                            <span className="uppercase font-medium">{invoice.customers?.name}</span>
                         </div>
                         <div className="flex">
-                            <span className="font-bold w-16">CC/NIT:</span>
+                            <span className="font-bold w-24 text-gray-600">FECHA INICIO:</span>
+                            <span>{new Date(invoice.created_at).toLocaleDateString()}</span>
+                        </div>
+
+                        <div className="flex">
+                            <span className="font-bold w-20 text-gray-600">CC/NIT:</span>
                             <span>{invoice.customers?.nit_cedula}</span>
                         </div>
                         <div className="flex">
-                            <span className="font-bold w-16">Dir:</span>
+                            <span className="font-bold w-24 text-gray-600">VENCIMIENTO:</span>
+                            <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString()}</span>
+                        </div>
+
+                        <div className="flex">
+                            <span className="font-bold w-20 text-gray-600">DIR:</span>
                             <span className="uppercase">{invoice.customers?.address || 'N/A'}</span>
                         </div>
                         <div className="flex">
-                            <span className="font-bold w-16">Tel:</span>
-                            <span>{invoice.customers?.phone || 'N/A'}</span>
-                        </div>
-                    </div>
-
-                    {/* Invoice Meta */}
-                    <div className="space-y-1">
-                        <div className="flex justify-between border-b border-gray-200 pb-1">
-                            <span className="font-bold">Fecha Emisión:</span>
-                            <span>{new Date(invoice.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-gray-200 pb-1 pt-1">
-                            <span className="font-bold">Vencimiento:</span>
-                            {/* Assuming 30 days or same day for now */}
-                            <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex justify-between pt-1">
-                            <span className="font-bold">Vendedor:</span>
+                            <span className="font-bold w-24 text-gray-600">VENDEDOR:</span>
                             <span className="uppercase">{invoice.seller?.full_name || 'N/A'}</span>
+                        </div>
+
+                        <div className="flex">
+                            <span className="font-bold w-20 text-gray-600">TEL:</span>
+                            <span>{invoice.customers?.phone || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Items Table */}
+                {/* Items Table - Remission Style */}
                 <div className="mb-8">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="border-t border-b border-gray-800">
-                                <th className="py-2 text-center w-12">CANT</th>
-                                <th className="py-2 text-left pl-4">CONCEPTO</th>
-                                <th className="py-2 text-right">VALOR UNIT</th>
-                                <th className="py-2 text-right">TOTAL</th>
+                            <tr className="border-t border-b border-gray-400">
+                                <th className="py-2 text-center w-10 text-gray-600 font-bold">CR</th>
+                                <th className="py-2 text-center w-16 text-gray-600 font-bold">UNIDADES</th>
+                                <th className="py-2 text-left pl-4 text-gray-600 font-bold w-32">REFERENCIA</th>
+                                <th className="py-2 text-left pl-4 text-gray-600 font-bold">CONCEPTO</th>
+                                <th className="py-2 text-right text-gray-600 font-bold w-24">VALOR UNIT</th>
+                                <th className="py-2 text-right text-gray-600 font-bold w-24">TOTAL</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-100">
                             {invoice.invoice_items?.map((item: any, idx: number) => (
                                 <tr key={idx}>
-                                    <td className="py-2 text-center">{item.quantity}</td>
-                                    <td className="py-2 pl-4 uppercase">{item.products?.name}</td>
-                                    <td className="py-2 text-right">{formatCurrency(item.unit_price)}</td>
-                                    <td className="py-2 text-right font-medium">{formatCurrency(item.total)}</td>
+                                    <td className="py-2 text-center text-gray-500">{idx + 1}</td>
+                                    <td className="py-2 text-center font-medium">{item.quantity}</td>
+                                    <td className="py-2 pl-4 text-gray-500">{item.products?.sku || '-'}</td>
+                                    <td className="py-2 pl-4 uppercase font-medium">{item.products?.name}</td>
+                                    <td className="py-2 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
+                                    <td className="py-2 text-right font-bold text-gray-900">{formatCurrency(item.total)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -216,22 +231,29 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                 </div>
 
                 {/* Footer Totals */}
-                <div className="flex justify-end mb-12">
-                    <div className="w-64 border border-gray-800 rounded-sm">
-                        <div className="flex justify-between p-2 border-b border-gray-800 bg-gray-100">
-                            <span className="font-bold text-sm">SUBTOTAL</span>
-                            <span className="font-bold text-sm">{formatCurrency(invoice.total / 1.19)}</span> {/* Approx base */}
+                <div className="flex flex-col items-end mb-12">
+                    <div className="w-72 border border-gray-400 rounded-sm overflow-hidden">
+                        <div className="flex justify-between p-2 border-b border-gray-300 bg-gray-50">
+                            <span className="font-bold text-xs text-gray-600">SUBTOTAL</span>
+                            <span className="font-bold text-sm text-gray-800">{formatCurrency(invoice.total / 1.19)}</span>
                         </div>
-                        <div className="flex justify-between p-2 text-lg">
-                            <span className="font-bold">TOTAL</span>
-                            <span className="font-bold">{formatCurrency(invoice.total)}</span>
+                        {/* 
+                         * NOTE: The physical receipt doesn't explicitly show IVA/Tax breakdown clearly in the example, 
+                         * but standard accounting usually requires it. Keeping Total simpler as per 'Remisión' style often means just the big numbers.
+                         */}
+                        <div className="flex justify-between p-3 bg-white">
+                            <span className="font-bold text-sm uppercase">Total a Pagar</span>
+                            <span className="font-bold text-xl text-black">{formatCurrency(invoice.total)}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Footer Notes */}
-                <div className="text-center text-xs font-bold border-t border-gray-300 pt-4 uppercase">
-                    NOTA: DESPUES DE 8 DIAS NO SE ACEPTAN DEVOLUCIONES
+                <div className="text-center mt-auto">
+                    <p className="text-[10px] font-bold uppercase text-gray-600 border-t border-gray-300 pt-2 inline-block px-12">
+                        Nota: Despues de 8 dias no se aceptan devoluciones
+                    </p>
+                    <div className="h-4"></div>
                 </div>
             </div>
 
