@@ -12,6 +12,7 @@ type Customer = {
     phone: string
     phone2?: string
     address: string
+    city?: string
 }
 
 export default function CustomersPage() {
@@ -27,7 +28,8 @@ export default function CustomersPage() {
         email: '',
         phone: '',
         phone2: '',
-        address: ''
+        address: '',
+        city: ''
     })
 
     useEffect(() => {
@@ -69,7 +71,7 @@ export default function CustomersPage() {
 
             setIsModalOpen(false)
             setEditingCustomer(null)
-            setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '' })
+            setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '', city: '' })
             fetchCustomers()
         } catch (error) {
             console.error('Error saving customer:', error)
@@ -85,7 +87,8 @@ export default function CustomersPage() {
             email: customer.email || '',
             phone: customer.phone || '',
             phone2: customer.phone2 || '',
-            address: customer.address || ''
+            address: customer.address || '',
+            city: customer.city || ''
         })
         setIsModalOpen(true)
     }
@@ -122,7 +125,7 @@ export default function CustomersPage() {
                 <button
                     onClick={() => {
                         setEditingCustomer(null)
-                        setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '' })
+                        setFormData({ name: '', nit_cedula: '', email: '', phone: '', phone2: '', address: '', city: '' })
                         setIsModalOpen(true)
                     }}
                     className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
@@ -227,9 +230,14 @@ export default function CustomersPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {customer.address ? (
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    <MapPin className="h-3 w-3 mr-1" />
-                                                    {customer.address}
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center text-sm text-gray-500">
+                                                        <MapPin className="h-3 w-3 mr-1" />
+                                                        {customer.address}
+                                                    </div>
+                                                    {customer.city && (
+                                                        <span className="text-xs text-gray-400 ml-4">{customer.city}</span>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <span className="text-gray-400 text-xs italic">No registrada</span>
@@ -346,6 +354,16 @@ export default function CustomersPage() {
                                                 placeholder="Calle 123 # 45-67"
                                                 value={formData.address}
                                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+                                            <input
+                                                type="text"
+                                                className="block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                placeholder="Ej: Ibagué"
+                                                value={formData.city}
+                                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                                             />
                                         </div>
                                     </div>
