@@ -54,7 +54,7 @@ BEGIN
     p_seller_id,
     v_calculated_total, -- <--- SECURE
     'paid',
-    p_invoice_type,
+    p_invoice_type::invoice_type,
     timezone('utc'::text, now())
   ) RETURNING id INTO v_invoice_id;
 
