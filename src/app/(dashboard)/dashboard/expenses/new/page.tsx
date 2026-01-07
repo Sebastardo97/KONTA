@@ -15,7 +15,7 @@ export default function NewExpensePage() {
     const [category, setCategory] = useState('varios')
     const [amount, setAmount] = useState('')
     const [description, setDescription] = useState('')
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+    const [date, setDate] = useState(new Date().toISOString().slice(0, 16)) // Format: YYYY-MM-DDTHH:mm
     const [selectedUser, setSelectedUser] = useState('')
 
     // Categories List
@@ -46,7 +46,7 @@ export default function NewExpensePage() {
         fetchSellers()
     }, [])
 
-    const handleSave = async (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent, shouldRedirect = true) => {
         e.preventDefault()
 
         if (!amount || Number(amount) <= 0) return alert('Ingresa un monto válido')
@@ -60,14 +60,23 @@ export default function NewExpensePage() {
                     category,
                     amount: Number(amount),
                     description,
-                    date,
-                    user_id: selectedUser // The person responsible (e.g., the seller receiving viaticos)
+                    date: new Date(date).toISOString(), // Convert back to ISO for DB
+                    user_id: selectedUser // The person responsible
                 })
 
             if (error) throw error
 
             alert('Gasto registrado correctamente')
-            router.push('/dashboard/expenses')
+
+            if (shouldRedirect) {
+                router.push('/dashboard/expenses')
+            } else {
+                // Reset form for next entry
+                setAmount('')
+                setDescription('')
+                // Keep category & date & user as they might be adding multiple for same day/person
+                // setDate(new Date().toISOString().slice(0, 16)) 
+            }
         } catch (error: any) {
             console.error(error)
             alert('Error al guardar: ' + error.message)
@@ -89,7 +98,7 @@ export default function NewExpensePage() {
                 </div>
             </div>
 
-            <form onSubmit={handleSave} className="glass-card bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
+            <form onSubmit={(e) => handleSave(e, true)} className="glass-card bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
 
                 {/* Category Selection */}
                 <div>
@@ -103,8 +112,8 @@ export default function NewExpensePage() {
                                 type="button"
                                 onClick={() => setCategory(cat.id)}
                                 className={`px-4 py-3 rounded-lg text-sm font-medium text-left transition-all border ${category === cat.id
-                                        ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm ring-1 ring-purple-200'
-                                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                                    ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm ring-1 ring-purple-200'
+                                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                                     }`}
                             >
                                 {cat.label}
@@ -136,10 +145,10 @@ export default function NewExpensePage() {
                     {/* Date */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                            Fecha del Gasto
+                            Fecha Exacta
                         </label>
                         <input
-                            type="date"
+                            type="datetime-local"
                             required
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                             value={date}
@@ -164,7 +173,7 @@ export default function NewExpensePage() {
                         </select>
                         {category === 'viaticos' && (
                             <p className="text-xs text-orange-600 mt-1.5 font-medium">
-                                * Para viáticos, selecciona al vendedor que realizó el viaje.
+                                * Selecciona al vendedor que realizó el viaje.
                             </p>
                         )}
                     </div>
@@ -185,22 +194,32 @@ export default function NewExpensePage() {
                     </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                <div className="pt-4 border-t border-gray-100 flex justify-end gap-3 flex-wrap">
                     <Link
                         href="/dashboard/expenses"
-                        className="px-6 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-6 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors order-1"
                     >
                         Cancelar
                     </Link>
+
+                    <button
+                        type="button"
+                        onClick={(e) => handleSave(e, false)}
+                        disabled={processing}
+                        className="px-6 py-2.5 bg-white border border-purple-200 text-purple-700 font-medium rounded-lg hover:bg-purple-50 transition-colors order-2"
+                    >
+                        Guardar y Crear Otro
+                    </button>
+
                     <button
                         type="submit"
                         disabled={processing}
-                        className="px-6 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 shadow-lg shadow-purple-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 shadow-lg shadow-purple-600/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed order-3"
                     >
                         {processing ? 'Guardando...' : (
                             <>
                                 <Save className="h-4 w-4" />
-                                Guardar Gasto
+                                Guardar y Salir
                             </>
                         )}
                     </button>

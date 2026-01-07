@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
+  "author": "KONTA",
+  "description": "KONTA Accounting App",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +13,7 @@
     "build:desktop": "cross-env NEXT_PUBLIC_IS_DESKTOP=true next build && electron-builder",
     "dev:electron": "cross-env NEXT_PUBLIC_IS_DESKTOP=true next dev"
   },
-  "dependencies": {
+  "devDependencies": {
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.86.2",
@@ -25,9 +27,7 @@
     "recharts": "^3.5.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.13",
-    "zustand": "^5.0.9"
-  },
-  "devDependencies": {
+    "zustand": "^5.0.9",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

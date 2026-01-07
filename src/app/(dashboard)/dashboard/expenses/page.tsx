@@ -143,13 +143,13 @@ export default function ExpensesPage() {
                             ) : (
                                 expenses.map((expense) => (
                                     <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 text-gray-600">
-                                            {new Date(expense.date).toLocaleDateString()}
+                                        <td className="px-6 py-4 text-gray-600 font-medium">
+                                            {new Date(expense.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border ${expense.category === 'viaticos'
-                                                    ? 'bg-orange-100 text-orange-800 border-orange-200'
-                                                    : 'bg-gray-100 text-gray-800 border-gray-200'
+                                                ? 'bg-orange-100 text-orange-800 border-orange-200'
+                                                : 'bg-gray-100 text-gray-800 border-gray-200'
                                                 }`}>
                                                 {expense.category}
                                             </span>
