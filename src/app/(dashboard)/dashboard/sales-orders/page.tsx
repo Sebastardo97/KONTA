@@ -27,10 +27,7 @@ export default function SalesOrdersPage() {
     const { isAdmin, isSeller } = useRole()
 
     useEffect(() => {
-        if (isSeller) {
-            router.push('/dashboard/my-orders')
-            return
-        }
+        // Now sellers can see all orders too
         fetchOrders()
     }, [isSeller])
 
@@ -74,7 +71,7 @@ export default function SalesOrdersPage() {
         }
     }
 
-    if (!isAdmin) {
+    if (!isAdmin && !isSeller) {
         return (
             <div className="p-8 text-center">
                 <p className="text-red-600">No tienes permisos para ver esta página</p>
