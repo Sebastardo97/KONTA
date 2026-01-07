@@ -20,6 +20,7 @@ import {
     UserCog,
     TrendingUp,
     Award,
+    Wallet,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -34,7 +35,8 @@ const adminNavigation = [
     { name: 'Productos', href: '/dashboard/products', icon: Package },
     { name: 'Clientes', href: '/dashboard/customers', icon: Users },
     { name: 'Proveedores', href: '/dashboard/suppliers', icon: Truck },
-    { name: 'Gastos', href: '/dashboard/purchases', icon: ArrowUpRight },
+    { name: 'Compras', href: '/dashboard/purchases', icon: ArrowUpRight },
+    { name: 'Gastos', href: '/dashboard/expenses', icon: Wallet },
     { name: 'Órdenes de Venta', href: '/dashboard/sales-orders', icon: ClipboardList },
     { name: 'Vendedores', href: '/dashboard/sellers', icon: UserCog },
     { name: 'Reportes Ventas', href: '/dashboard/reports/sales-by-seller', icon: BarChart },

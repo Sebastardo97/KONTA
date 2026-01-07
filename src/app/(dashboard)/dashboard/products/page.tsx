@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit, Trash2, Package, Tag, Loader2, DollarSign } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Package, Tag, Loader2 } from 'lucide-react'
+import { useRole } from '@/hooks/useRole'
 
 type Product = {
     id: string
@@ -15,6 +16,8 @@ type Product = {
 }
 
 export default function ProductsPage() {
+    const { role } = useRole()
+    const isAdmin = role === 'admin'
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -140,17 +143,19 @@ export default function ProductsPage() {
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Inventario de Productos</h1>
                     <p className="text-sm text-gray-500">Administra tu catálogo y existencias</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingProduct(null)
-                        setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
-                        setIsModalOpen(true)
-                    }}
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
-                >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Nuevo Producto
-                </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => {
+                            setEditingProduct(null)
+                            setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
+                            setIsModalOpen(true)
+                        }}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
+                    >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Nuevo Producto
+                    </button>
+                )}
             </div>
 
             {/* Main Card */}
@@ -235,14 +240,16 @@ export default function ProductsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => handleEdit(product)} className="p-1 text-indigo-600 hover:bg-indigo-50 rounded">
-                                                    <Edit className="h-4 w-4" />
-                                                </button>
-                                                <button onClick={() => handleDelete(product.id)} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
+                                            {isAdmin && (
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleEdit(product)} className="p-1 text-indigo-600 hover:bg-indigo-50 rounded">
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(product.id)} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

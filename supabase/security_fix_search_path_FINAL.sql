@@ -1,56 +1,38 @@
--- ============================================
--- FIX: Search Path - DEFINITIVE VERSION
--- ============================================
--- With exact function signatures from database
+-- =================================================================
+-- FIX: Security Warning - Missing Search Path in Security Definer
+-- =================================================================
+-- Supabase warns about functions with SECURITY DEFINER that do not
+-- have a fixed search_path. This allows potential privilege escalation.
+--
+-- This script fixes the remaining functions identified:
+-- 1. create_pos_invoice (POS transaction)
+-- 2. process_return (Returns/Credit Notes)
+-- 3. handle_role_update (Role syncing)
+-- =================================================================
 
--- Functions without parameters (triggers, helpers)
-ALTER FUNCTION public.auto_calculate_invoice_item_total() SET search_path = public, pg_temp;
-ALTER FUNCTION public.auto_calculate_sales_order_item_total() SET search_path = public, pg_temp;
-ALTER FUNCTION public.decrement_stock_on_purchase_delete() SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_user_role() SET search_path = public, pg_temp;
-ALTER FUNCTION public.handle_new_user() SET search_path = public, pg_temp;
-ALTER FUNCTION public.increment_stock_on_purchase() SET search_path = public, pg_temp;
-ALTER FUNCTION public.is_admin() SET search_path = public, pg_temp;
-ALTER FUNCTION public.is_seller() SET search_path = public, pg_temp;
-ALTER FUNCTION public.log_audit_event() SET search_path = public, pg_temp;
-ALTER FUNCTION public.update_sales_order_total() SET search_path = public, pg_temp;
-ALTER FUNCTION public.update_updated_at_column() SET search_path = public, pg_temp;
-ALTER FUNCTION public.validate_invoice() SET search_path = public, pg_temp;
+-- 1. Fix create_pos_invoice
+-- Matches signature in fix_pos_security.sql
+ALTER FUNCTION public.create_pos_invoice(UUID, UUID, JSONB, NUMERIC, TEXT)
+SET search_path = public, pg_temp;
 
--- Functions with parameters (exact signatures)
-ALTER FUNCTION public.calculate_invoice_item_total(NUMERIC, INTEGER, NUMERIC) SET search_path = public, pg_temp;
-ALTER FUNCTION public.create_customer_secure(TEXT, TEXT, TEXT, TEXT, TEXT) SET search_path = public, pg_temp;
-ALTER FUNCTION public.create_product_secure(TEXT, TEXT, TEXT, NUMERIC, INTEGER, INTEGER) SET search_path = public, pg_temp;
-ALTER FUNCTION public.decrement_stock(UUID, INTEGER) SET search_path = public, pg_temp;
-ALTER FUNCTION public.execute_sales_order(UUID, UUID) SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_audit_logs_for_record(TEXT, UUID) SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_seller_monthly_sales(UUID, INTEGER) SET search_path = public, pg_temp;
-ALTER FUNCTION public.get_seller_performance(UUID, TIMESTAMPTZ, TIMESTAMPTZ) SET search_path = public, pg_temp;
-ALTER FUNCTION public.is_valid_email(TEXT) SET search_path = public, pg_temp;
-ALTER FUNCTION public.is_valid_phone(TEXT) SET search_path = public, pg_temp;
-ALTER FUNCTION public.sanitize_text(TEXT) SET search_path = public, pg_temp;
+-- 2. Fix process_return
+-- Matches signature in returns_schema.sql
+ALTER FUNCTION public.process_return(UUID, JSONB, TEXT, UUID)
+SET search_path = public, pg_temp;
 
--- ============================================
--- Verification
--- ============================================
-SELECT 
-    COUNT(*) as total_fixed,
-    '✅ All 23 functions secured!' as status
-FROM pg_proc p
-JOIN pg_namespace n ON p.pronamespace = n.oid
-WHERE n.nspname = 'public'
-AND p.proconfig IS NOT NULL
-AND 'search_path=public,pg_temp' = ANY(p.proconfig);
+-- 3. Fix handle_role_update
+-- Matches signature in middleware_optimization.sql
+ALTER FUNCTION public.handle_role_update()
+SET search_path = public, pg_temp;
 
--- Show remaining warnings (should be 0)
-SELECT 
-    p.proname as function_name,
-    CASE 
-        WHEN p.proconfig IS NOT NULL THEN '✅ Secured'
-        ELSE '⚠️ Still mutable'
-    END as status
-FROM pg_proc p
-JOIN pg_namespace n ON p.pronamespace = n.oid
-WHERE n.nspname = 'public'
-AND p.prokind = 'f'
-ORDER BY status, p.proname;
+-- =================================================================
+-- VERIFICATION
+-- =================================================================
+-- Run this to check if any other public functions are missing search_path:
+--
+-- SELECT n.nspname, p.proname, p.prosecdef, p.proconfig
+-- FROM pg_proc p
+-- JOIN pg_namespace n ON p.pronamespace = n.oid
+-- WHERE n.nspname = 'public'
+--   AND p.prosecdef = true
+--   AND (p.proconfig IS NULL OR NOT (p.proconfig @> '{search_path=public,pg_temp}'));

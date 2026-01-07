@@ -1,144 +1,89 @@
--- ============================================
--- KONTA - Master Bug Fix Script
--- Ejecutar en orden para corregir todos los bugs
--- ============================================
+-- MASTER FIX SCRIPT
+-- This script fixes 3 potential issues at once:
+-- 1. SYNC: Forces your "Admin" role from the profiles table into the Auth system (metadata).
+-- 2. RECURSION: Bypasses the infinite loop when checking permissions.
+-- 3. PERMISSIONS: Ensures the helper function allows execution.
 
--- Fecha: 2025-12-16
--- Bugs Corregidos: #1, #3, #4
--- Nota: Bug #2 (rollback) se maneja en código
---       Bug #5 (paginación) se implementa en frontend
-
-BEGIN;
-
--- ============================================
--- FIX #1: NUMERACIÓN CONSECUTIVA DE FACTURAS
--- ============================================
-
--- Create sequence
-CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START 1;
-
--- Add number column
-ALTER TABLE invoices 
-ADD COLUMN IF NOT EXISTS number INTEGER;
-
--- Create auto-number function
-CREATE OR REPLACE FUNCTION generate_invoice_number()
-RETURNS TRIGGER AS $$
+-- PART 1: Sync Profiles -> Auth Metadata
+-- This ensures useRole() sees the correct role immediately without checking the database repeatedly.
+DO $$
+DECLARE
+  user_record record;
 BEGIN
-  IF NEW.number IS NULL THEN
-    NEW.number := nextval('invoice_number_seq');
-  END IF;
-  RETURN NEW;
+  FOR user_record IN SELECT * FROM public.profiles LOOP
+    UPDATE auth.users
+    SET raw_user_meta_data = 
+      COALESCE(raw_user_meta_data, '{}'::jsonb) || 
+      jsonb_build_object('role', user_record.role)
+    WHERE id = user_record.id;
+  END LOOP;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- Create trigger
-DROP TRIGGER IF EXISTS set_invoice_number ON invoices;
-CREATE TRIGGER set_invoice_number
-  BEFORE INSERT ON invoices
-  FOR EACH ROW
-  EXECUTE FUNCTION generate_invoice_number();
+-- PART 2: Fix Recursion (Security Definer)
+CREATE OR REPLACE FUNCTION public.get_my_claim_role()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_role text;
+BEGIN
+  SELECT role INTO user_role
+  FROM public.profiles
+  WHERE id = auth.uid();
+  return user_role;
+END;
+$$;
 
--- Populate existing invoices
-WITH numbered_invoices AS (
-  SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) as new_number
-  FROM invoices
-  WHERE number IS NULL
-)
-UPDATE invoices
-SET number = numbered_invoices.new_number
-FROM numbered_invoices
-WHERE invoices.id = numbered_invoices.id;
+-- Grant execution permission to everyone (authenticated)
+GRANT EXECUTE ON FUNCTION public.get_my_claim_role TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_claim_role TO service_role;
 
--- Reset sequence
-SELECT setval('invoice_number_seq', COALESCE((SELECT MAX(number) FROM invoices), 0) + 1, false);
+-- PART 3: Apply Optimized RLS Policies
 
--- Make NOT NULL
-ALTER TABLE invoices ALTER COLUMN number SET NOT NULL;
+-- Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
--- Add unique constraint
-ALTER TABLE invoices ADD CONSTRAINT invoices_number_unique UNIQUE (number);
+-- Drop old policies to be clean
+DROP POLICY IF EXISTS "Admins view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "admin_seller_insert_products" ON products;
+DROP POLICY IF EXISTS "admin_seller_update_products" ON products;
+DROP POLICY IF EXISTS "admin_seller_delete_products" ON products;
 
--- ============================================
--- FIX #3: CONSTRAINTS DE INTEGRIDAD
--- ============================================
+-- 3.1 Profiles Policies
+CREATE POLICY "Users view own profile"
+ON public.profiles FOR SELECT
+TO authenticated
+USING ( auth.uid() = id );
 
--- Customers ON DELETE RESTRICT
-ALTER TABLE invoices 
-DROP CONSTRAINT IF EXISTS invoices_customer_id_fkey;
+CREATE POLICY "Admins view all profiles"
+ON public.profiles FOR SELECT
+TO authenticated
+USING ( get_my_claim_role() = 'admin' );
 
-ALTER TABLE invoices
-ADD CONSTRAINT invoices_customer_id_fkey 
-FOREIGN KEY (customer_id) 
-REFERENCES customers(id) 
-ON DELETE RESTRICT;
+-- 3.2 Products Policies (Admin & Seller management)
+CREATE POLICY "admin_seller_insert_products"
+ON products FOR INSERT TO authenticated
+WITH CHECK ( get_my_claim_role() IN ('admin', 'seller') );
 
--- Sellers ON DELETE RESTRICT
-ALTER TABLE invoices 
-DROP CONSTRAINT IF EXISTS invoices_seller_id_fkey;
+CREATE POLICY "admin_seller_update_products"
+ON products FOR UPDATE TO authenticated
+USING ( get_my_claim_role() IN ('admin', 'seller') )
+WITH CHECK ( get_my_claim_role() IN ('admin', 'seller') );
 
-ALTER TABLE invoices
-ADD CONSTRAINT invoices_seller_id_fkey 
-FOREIGN KEY (seller_id) 
-REFERENCES profiles(id) 
-ON DELETE RESTRICT;
+CREATE POLICY "admin_seller_delete_products"
+ON products FOR DELETE TO authenticated
+USING ( get_my_claim_role() IN ('admin', 'seller') );
 
--- Products ON DELETE RESTRICT
-ALTER TABLE invoice_items 
-DROP CONSTRAINT IF EXISTS invoice_items_product_id_fkey;
-
-ALTER TABLE invoice_items
-ADD CONSTRAINT invoice_items_product_id_fkey 
-FOREIGN KEY (product_id) 
-REFERENCES products(id) 
-ON DELETE RESTRICT;
-
--- ============================================
--- FIX #4: VALIDACIÓN DE DESCUENTOS
--- ============================================
-
--- Invoice items discount range
-ALTER TABLE invoice_items
-DROP CONSTRAINT IF EXISTS check_discount_range;
-
-ALTER TABLE invoice_items
-ADD CONSTRAINT check_discount_range 
-CHECK (discount_percentage >= 0 AND discount_percentage <= 100);
-
--- Sales order items discount range
-ALTER TABLE sales_order_items
-DROP CONSTRAINT IF EXISTS check_discount_range;
-
-ALTER TABLE sales_order_items
-ADD CONSTRAINT check_discount_range 
-CHECK (discount_percentage >= 0 AND discount_percentage <= 100);
-
--- ============================================
--- VERIFICATION
--- ============================================
-
--- Verify invoice numbering
+-- PART 4: Verification Output
 SELECT 
-    'Invoice Numbering' as check_name,
-    COUNT(*) as total_invoices,
-    MIN(number) as min_number,
-    MAX(number) as max_number
-FROM invoices;
-
--- Verify constraints
-SELECT 
-    'Constraints' as check_name,
-    conname,
-    pg_get_constraintdef(oid) as definition
-FROM pg_constraint
-WHERE conrelid IN ('invoices'::regclass, 'invoice_items'::regclass)
-  AND conname LIKE '%fkey%' OR conname LIKE '%check%'
-ORDER BY conrelid, conname;
-
-COMMIT;
-
--- ============================================
--- ROLLBACK INSTRUCTIONS (if needed)
--- ============================================
--- If something fails, run:
--- ROLLBACK;
+  p.email, 
+  p.role as profile_role, 
+  u.raw_user_meta_data->>'role' as auth_metadata_role
+FROM public.profiles p
+JOIN auth.users u ON p.id = u.id
+ORDER BY p.email;

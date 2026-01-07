@@ -86,8 +86,8 @@ export default function InvoicesPage() {
                 <button
                     onClick={() => setTypeFilter('ALL')}
                     className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${typeFilter === 'ALL'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     Todas ({invoices.length})
@@ -95,8 +95,8 @@ export default function InvoicesPage() {
                 <button
                     onClick={() => setTypeFilter('POS')}
                     className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${typeFilter === 'POS'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     Facturas POS
@@ -104,8 +104,8 @@ export default function InvoicesPage() {
                 <button
                     onClick={() => setTypeFilter('NORMAL')}
                     className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${typeFilter === 'NORMAL'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                 >
                     Facturas Normales
@@ -191,10 +191,10 @@ export default function InvoicesPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link href={`/dashboard/invoices/${invoice.id}`} className="text-blue-600 hover:text-blue-900 mr-4 inline-block" title="Ver Factura">
+                                        <Link href={`/dashboard/invoices/detail?id=${invoice.id}`} className="text-blue-600 hover:text-blue-900 mr-4 inline-block" title="Ver Factura">
                                             <Eye className="h-4 w-4" />
                                         </Link>
-                                        <Link href={`/dashboard/invoices/${invoice.id}`} className="text-green-600 hover:text-green-900 inline-block" title="Descargar PDF">
+                                        <Link href={`/dashboard/invoices/detail?id=${invoice.id}`} className="text-green-600 hover:text-green-900 inline-block" title="Descargar PDF">
                                             <Download className="h-4 w-4" />
                                         </Link>
                                     </td>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useRole } from '@/hooks/useRole'
 import {
@@ -20,13 +20,13 @@ type SalesOrder = {
     id: string
     customer: any
     seller: any
-    created_by_user?: any // Added for robustness
-    created_by?: string // Added for logic
+    created_by_user?: any
+    created_by?: string
     total: number
     status: string
     notes: string | null
     created_at: string
-    updated_at: string // Matches DB schema
+    updated_at: string
     executed_invoice_id: string | null
 }
 
@@ -39,11 +39,11 @@ type OrderItem = {
     total: number
 }
 
-export default function SalesOrderDetailPage() {
+function SalesOrderDetailContent() {
     const router = useRouter()
-    const params = useParams()
+    const searchParams = useSearchParams()
     const { isAdmin, userId } = useRole()
-    const orderId = params?.id as string
+    const orderId = searchParams.get('id')
 
     const [order, setOrder] = useState<SalesOrder | null>(null)
     const [items, setItems] = useState<OrderItem[]>([])
@@ -60,8 +60,6 @@ export default function SalesOrderDetailPage() {
         try {
             let finalOrder = null;
 
-            // 1. Fetch order with essential relations (customer and seller/assigned_to)
-            // Note: We avoid joining created_by here to prevent errors if the specific FK is missing
             const { data: orderData, error: orderError } = await supabase
                 .from('sales_orders')
                 .select(`
@@ -73,18 +71,15 @@ export default function SalesOrderDetailPage() {
                 .single()
 
             if (orderError) {
-                // Fallback: fetch without robust Foreign Keys in case of schema mismatch
-                console.warn('Primary fetch failed, trying fallback to partial fetch...', orderError);
-
+                console.warn('Primary fetch failed, trying fallback...', orderError);
                 const { data: fallbackOrder, error: fallbackError } = await supabase
                     .from('sales_orders')
                     .select(`*, customer:customers(*)`)
                     .eq('id', orderId)
                     .single()
 
-                if (fallbackError) throw orderError // Throw original error if both fail
+                if (fallbackError) throw orderError
 
-                // Manually fetch seller if needed
                 if (fallbackOrder.assigned_to) {
                     const { data: sellerProfile } = await supabase
                         .from('profiles')
@@ -98,13 +93,9 @@ export default function SalesOrderDetailPage() {
                 finalOrder = orderData;
             }
 
-            // Update state with what we found so far
             setOrder(finalOrder);
 
-            // 2. Fetch "Created By" user details manually (Robust against missing FKs)
-            // Use the valid 'finalOrder' we just obtained
             if (finalOrder && finalOrder.created_by) {
-                // Independent fetch for Creator
                 const { data: creatorProfile } = await supabase
                     .from('profiles')
                     .select('*')
@@ -112,12 +103,10 @@ export default function SalesOrderDetailPage() {
                     .single()
 
                 if (creatorProfile) {
-                    // Mutate the state to include it
                     setOrder((prev: any) => ({ ...prev, created_by_user: creatorProfile }))
                 }
             }
 
-            // 3. Fetch order items
             const { data: itemsData, error: itemsError } = await supabase
                 .from('sales_order_items')
                 .select(`
@@ -132,7 +121,7 @@ export default function SalesOrderDetailPage() {
         } catch (error) {
             console.error('Error fetching order:', error)
             alert('Error al cargar la orden. Por favor intenta recargar.')
-            router.push('/dashboard/sales-orders'); // Redirect back on error to avoid broken state
+            router.push('/dashboard/sales-orders');
         } finally {
             setLoading(false)
         }
@@ -148,7 +137,6 @@ export default function SalesOrderDetailPage() {
 
         setExecuting(true)
         try {
-            // 1. Create invoice
             const { data: invoice, error: invoiceError } = await supabase
                 .from('invoices')
                 .insert({
@@ -163,7 +151,6 @@ export default function SalesOrderDetailPage() {
 
             if (invoiceError) throw invoiceError
 
-            // 2. Create invoice items from order items
             const invoiceItems = items.map(item => ({
                 invoice_id: invoice.id,
                 product_id: item.product.id,
@@ -179,7 +166,6 @@ export default function SalesOrderDetailPage() {
 
             if (itemsError) throw itemsError
 
-            // 3. Update stock
             for (const item of items) {
                 await supabase.rpc('decrement_stock', {
                     row_id: item.product.id,
@@ -187,7 +173,6 @@ export default function SalesOrderDetailPage() {
                 })
             }
 
-            // 4. Update sales order status
             const { error: updateError } = await supabase
                 .from('sales_orders')
                 .update({
@@ -415,5 +400,13 @@ export default function SalesOrderDetailPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function SalesOrderDetailPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-96">Cargando...</div>}>
+            <SalesOrderDetailContent />
+        </Suspense>
     )
 }

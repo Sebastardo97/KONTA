@@ -6,7 +6,9 @@
 
 -- VIEW: Sales by Seller
 -- Aggregates sales data by seller for quick reporting
-CREATE OR REPLACE VIEW sales_by_seller AS
+CREATE OR REPLACE VIEW sales_by_seller 
+WITH (security_invoker = true)
+AS
 SELECT 
   p.id as seller_id,
   p.full_name as seller_name,

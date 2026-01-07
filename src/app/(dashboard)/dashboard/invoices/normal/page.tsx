@@ -165,10 +165,10 @@ export default function NormalInvoicesPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link href={`/dashboard/invoices/${invoice.id}`} className="text-blue-600 hover:text-blue-900 mr-4 inline-block" title="Ver Factura">
+                                        <Link href={`/dashboard/invoices/detail?id=${invoice.id}`} className="text-blue-600 hover:text-blue-900 mr-4 inline-block" title="Ver Factura">
                                             <Eye className="h-4 w-4" />
                                         </Link>
-                                        <Link href={`/dashboard/invoices/${invoice.id}`} className="text-green-600 hover:text-green-900 inline-block" title="Descargar PDF">
+                                        <Link href={`/dashboard/invoices/detail?id=${invoice.id}`} className="text-green-600 hover:text-green-900 inline-block" title="Descargar PDF">
                                             <Download className="h-4 w-4" />
                                         </Link>
                                     </td>

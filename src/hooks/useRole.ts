@@ -31,19 +31,25 @@ export function useRole(): UseRoleReturn {
                 const { data: { user }, error: userError } = await supabase.auth.getUser()
 
                 if (userError || !user) {
+                    console.log('❌ useRole: No authenticated user found')
                     setRole(null)
                     setUserId(null)
                     return
                 }
 
                 setUserId(user.id)
+                console.log('🔍 useRole: User found:', user.email)
+                console.log('📋 useRole: Metadata role:', user.user_metadata?.role)
 
                 // OPTIMIZATION: Check metadata first
                 if (user.user_metadata?.role) {
+                    console.log('✅ useRole: Using role from Metadata:', user.user_metadata.role)
                     setRole(user.user_metadata.role as UserRole)
                     setLoading(false)
                     return
                 }
+
+                console.log('⚠️ useRole: No metadata role, checking DB profile...')
 
                 // Fallback: Get user profile with role from DB
                 const { data: profile, error: profileError } = await supabase
@@ -51,6 +57,8 @@ export function useRole(): UseRoleReturn {
                     .select('role')
                     .eq('id', user.id)
                     .single()
+
+                console.log('🗄️ useRole: DB Profile result:', { profile, error: profileError })
 
                 if (profileError || !profile) {
                     console.error('Error fetching profile:', profileError)

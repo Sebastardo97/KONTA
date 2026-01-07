@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Printer, ArrowLeft, RotateCcw } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import ReturnModal from '@/components/returns/ReturnModal'
 import { getCreditNotesByInvoice } from '@/lib/returns'
 
@@ -16,13 +16,15 @@ const formatCurrency = (amount: number) => {
     }).format(amount)
 }
 
-export default function InvoiceDetailsPage({ params }: { params: { id: string } }) {
+function InvoiceDetailsContent() {
     const [invoice, setInvoice] = useState<any>(null)
     const [company, setCompany] = useState<any>(null)
     const [creditNotes, setCreditNotes] = useState<any[]>([])
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const id = searchParams.get('id')
 
     // Use native window print for simplicity and reliability
     const handlePrint = () => {
@@ -30,10 +32,12 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
     }
 
     useEffect(() => {
-        fetchData()
-    }, [params.id])
+        if (id) {
+            fetchData(id)
+        }
+    }, [id])
 
-    const fetchData = async () => {
+    const fetchData = async (invoiceId: string) => {
         try {
             setLoading(true)
 
@@ -53,14 +57,14 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                         products (name, sku)
                     )
                 `)
-                .eq('id', params.id)
+                .eq('id', invoiceId)
                 .single()
 
             if (invoiceError) throw invoiceError
             setInvoice(invoiceData)
 
             // Fetch Credit Notes
-            const creditNotesData = await getCreditNotesByInvoice(params.id)
+            const creditNotesData = await getCreditNotesByInvoice(invoiceId)
             setCreditNotes(creditNotesData || [])
 
             // Fetch Company Settings (for header)
@@ -203,7 +207,7 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                 </div>
 
                 {/* Items Table - Remission Style */}
-                <div className="mb-8">
+                <div className="mb-0">
                     <table className="w-full text-xs">
                         <thead>
                             <tr className="border-t border-b border-gray-400">
@@ -226,26 +230,19 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                                     <td className="py-2 text-right font-bold text-gray-900">{formatCurrency(item.total)}</td>
                                 </tr>
                             ))}
+                            {/* Empty rows to push totals to bottom if needed, or just spacers */}
+                            <tr className="border-t border-gray-300">
+                                <td colSpan={4}></td>
+                                <td className="py-2 text-right font-bold text-gray-600 border border-gray-300 bg-gray-50">SUBTOTAL</td>
+                                <td className="py-2 text-right font-bold text-gray-900 border border-gray-300">{formatCurrency(invoice.total / 1.19)}</td>
+                            </tr>
+                            <tr>
+                                <td colSpan={4}></td>
+                                <td className="py-2 text-right font-bold text-gray-800 border border-gray-300 bg-gray-50 text-sm">TOTAL</td>
+                                <td className="py-2 text-right font-bold text-black border border-gray-300 text-sm">{formatCurrency(invoice.total)}</td>
+                            </tr>
                         </tbody>
                     </table>
-                </div>
-
-                {/* Footer Totals */}
-                <div className="flex flex-col items-end mb-12">
-                    <div className="w-72 border border-gray-400 rounded-sm overflow-hidden">
-                        <div className="flex justify-between p-2 border-b border-gray-300 bg-gray-50">
-                            <span className="font-bold text-xs text-gray-600">SUBTOTAL</span>
-                            <span className="font-bold text-sm text-gray-800">{formatCurrency(invoice.total / 1.19)}</span>
-                        </div>
-                        {/* 
-                         * NOTE: The physical receipt doesn't explicitly show IVA/Tax breakdown clearly in the example, 
-                         * but standard accounting usually requires it. Keeping Total simpler as per 'Remisión' style often means just the big numbers.
-                         */}
-                        <div className="flex justify-between p-3 bg-white">
-                            <span className="font-bold text-sm uppercase">Total a Pagar</span>
-                            <span className="font-bold text-xl text-black">{formatCurrency(invoice.total)}</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Footer Notes */}
@@ -310,12 +307,20 @@ export default function InvoiceDetailsPage({ params }: { params: { id: string } 
                 isOpen={isReturnModalOpen}
                 onClose={() => setIsReturnModalOpen(false)}
                 onSuccess={() => {
-                    fetchData()
+                    fetchData(id!)
                     // Optional: Show success toast
                 }}
                 invoiceId={invoice.id}
                 items={invoice.invoice_items}
             />
         </div >
+    )
+}
+
+export default function InvoiceDetailsPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-96">Cargando...</div>}>
+            <InvoiceDetailsContent />
+        </Suspense>
     )
 }
