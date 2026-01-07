@@ -16,7 +16,9 @@ import {
     UserX,
     Edit,
     Phone,
-    CreditCard
+    CreditCard,
+    Plus,
+    ExternalLink
 } from 'lucide-react'
 import { EditSellerModal } from '@/components/EditSellerModal'
 
@@ -121,6 +123,13 @@ export default function SellerManagementPage() {
                         Administra los usuarios y sus permisos
                     </p>
                 </div>
+                <button
+                    onClick={() => window.open('https://supabase.com/dashboard/project/_/auth/users', '_blank')}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all font-medium text-sm"
+                >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo Vendedor
+                </button>
             </div>
 
             {/* Summary Cards */}
@@ -279,9 +288,12 @@ export default function SellerManagementPage() {
 
             {/* Info Note */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800">
-                    💡 <strong>Nota:</strong> Para agregar nuevos usuarios o cambiar roles, hazlo desde el panel de Supabase Auth.
-                    Los usuarios se crean automáticamente en la tabla profiles cuando se registran.
+                <p className="text-sm text-blue-800 flex items-start gap-2">
+                    <ExternalLink className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <span>
+                        <strong>Nota:</strong> Para agregar nuevos usuarios, haz clic en "Nuevo Vendedor" para ir al panel de Supabase.
+                        Una vez creados, aparecerán aquí automáticamente y podrás cambiar sus nombres y detalles.
+                    </span>
                 </p>
             </div>
 

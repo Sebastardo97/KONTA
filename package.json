@@ -32,19 +32,24 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "app-builder-bin": "^4.2.0",
     "cross-env": "^10.1.0",
     "electron": "^39.2.7",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.4.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
+  "overrides": {
+    "app-builder-bin": "$app-builder-bin"
+  },
   "build": {
     "appId": "com.konta.app",
     "productName": "KONTA",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "forceCodeSigning": false
     },
     "files": [
       "out/**/*",
