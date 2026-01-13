@@ -82,7 +82,7 @@ export default function SettingsPage() {
                         <input
                             type="text"
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -95,7 +95,7 @@ export default function SettingsPage() {
                         <input
                             type="text"
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                             value={formData.nit}
                             onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
                         />
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                         </label>
                         <input
                             type="text"
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                             value={formData.resolution_number}
                             onChange={(e) => setFormData({ ...formData, resolution_number: e.target.value })}
                             placeholder="Ej: 18760000001"
@@ -124,7 +124,7 @@ export default function SettingsPage() {
                             </label>
                             <input
                                 type="text"
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                                 value={formData.city}
                                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                                 placeholder="Ej: Bogotá"
@@ -137,7 +137,7 @@ export default function SettingsPage() {
                             </label>
                             <input
                                 type="text"
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 placeholder="Ej: 300 123 4567"
@@ -151,7 +151,7 @@ export default function SettingsPage() {
                         </label>
                         <input
                             type="text"
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 font-medium placeholder:text-gray-500"
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                             placeholder="Ej: Calle 123 # 45-67, Barrio Centro"

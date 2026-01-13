@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit, Trash2, Package, Tag, Loader2 } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Package, Tag, Loader2, FileSpreadsheet } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
+import ImportProductsModal from './ImportProductsModal'
 
 type Product = {
     id: string
@@ -22,6 +23,7 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [formData, setFormData] = useState({
         code: '',
@@ -144,18 +146,28 @@ export default function ProductsPage() {
                     <p className="text-sm text-gray-500">Administra tu catálogo y existencias</p>
                 </div>
                 {isAdmin && (
-                    <button
-                        onClick={() => {
-                            setEditingProduct(null)
-                            setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
-                            setIsModalOpen(true)
-                        }}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
-                    >
-                        <Plus className="h-5 w-5 mr-2" />
-                        Nuevo Producto
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg shadow-sm font-medium transition-all"
+                        >
+                            <FileSpreadsheet className="h-5 w-5 mr-2 text-green-600" />
+                            Importar Excel
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditingProduct(null)
+                                setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
+                                setIsModalOpen(true)
+                            }}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
+                        >
+                            <Plus className="h-5 w-5 mr-2" />
+                            Nuevo Producto
+                        </button>
+                    </div>
                 )}
+
             </div>
 
             {/* Main Card */}
@@ -338,6 +350,15 @@ export default function ProductsPage() {
                     </div>
                 </div>
             )}
+            {/* Import Modal */}
+            <ImportProductsModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onSuccess={() => {
+                    fetchProducts()
+                    // Optional: show a global success toast/message here
+                }}
+            />
         </div>
     )
 }

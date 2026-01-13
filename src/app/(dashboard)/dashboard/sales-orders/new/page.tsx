@@ -18,7 +18,7 @@ type OrderItem = {
 
 export default function NewSalesOrderPage() {
     const router = useRouter()
-    const { userId } = useRole()
+    const { userId, isSeller, isAdmin } = useRole()
 
     const [products, setProducts] = useState<any[]>([])
     const [customers, setCustomers] = useState<any[]>([])
@@ -34,7 +34,12 @@ export default function NewSalesOrderPage() {
     useEffect(() => {
         fetchProducts()
         fetchCustomers()
-    }, [])
+
+        // Auto-assign validation
+        if (isSeller && userId) {
+            setSelectedSeller(userId)
+        }
+    }, [isSeller, userId])
 
     const fetchProducts = async () => {
         const { data } = await supabase
@@ -258,19 +263,22 @@ export default function NewSalesOrderPage() {
                 </div>
 
                 {/* Seller Assignment */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <SellerSelect
-                        value={selectedSeller}
-                        onChange={(sellerId) => setSelectedSeller(sellerId || '')}
-                        label="Asignar a Vendedor"
-                    />
-                    {selectedSeller && (
-                        <p className="text-xs text-green-600 mt-2 flex items-center">
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            Vendedor asignado
-                        </p>
-                    )}
-                </div>
+                {/* Seller Assignment - Only visible to Admins */}
+                {isAdmin && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <SellerSelect
+                            value={selectedSeller}
+                            onChange={(sellerId) => setSelectedSeller(sellerId || '')}
+                            label="Asignar a Vendedor"
+                        />
+                        {selectedSeller && (
+                            <p className="text-xs text-green-600 mt-2 flex items-center">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                Vendedor asignado
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Product Search */}

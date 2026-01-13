@@ -15,6 +15,7 @@ import {
     FileText,
     AlertCircle
 } from 'lucide-react'
+import { InvoiceConfirmationModal } from '@/components/InvoiceConfirmationModal'
 
 type SalesOrder = {
     id: string
@@ -49,6 +50,8 @@ function SalesOrderDetailContent() {
     const [items, setItems] = useState<OrderItem[]>([])
     const [loading, setLoading] = useState(true)
     const [executing, setExecuting] = useState(false)
+    const [showConfirmation, setShowConfirmation] = useState(false)
+    const [invoiceType, setInvoiceType] = useState<'POS' | 'Normal'>('POS')
 
     useEffect(() => {
         if (orderId) {
@@ -129,11 +132,11 @@ function SalesOrderDetailContent() {
 
     const executeOrder = async () => {
         if (!order) return
+        setShowConfirmation(true)
+    }
 
-        const confirm = window.confirm(
-            '¿Estás seguro de ejecutar esta preventa? Se creará una factura y se actualizará el inventario.'
-        )
-        if (!confirm) return
+    const handleConfirmExecution = async () => {
+        if (!order) return
 
         setExecuting(true)
         try {
@@ -142,7 +145,7 @@ function SalesOrderDetailContent() {
                 .insert({
                     customer_id: order.customer.id,
                     seller_id: order.seller.id,
-                    invoice_type: 'POS',
+                    invoice_type: invoiceType,
                     total: order.total,
                     status: 'paid'
                 })
@@ -190,6 +193,7 @@ function SalesOrderDetailContent() {
             alert('Error al ejecutar la preventa: ' + error.message)
         } finally {
             setExecuting(false)
+            setShowConfirmation(false)
         }
     }
 
@@ -398,6 +402,30 @@ function SalesOrderDetailContent() {
                         Factura creada el {new Date(order.updated_at).toLocaleDateString()}
                     </p>
                 </div>
+            )}
+
+            {order && (
+                <InvoiceConfirmationModal
+                    isOpen={showConfirmation}
+                    onClose={() => setShowConfirmation(false)}
+                    onConfirm={handleConfirmExecution}
+                    loading={executing}
+                    onInvoiceTypeChange={setInvoiceType}
+                    invoiceData={{
+                        customerName: order.customer?.name || 'Cliente',
+                        sellerName: order.seller?.full_name || 'Vendedor',
+                        items: items.map(i => ({
+                            productName: i.product.name,
+                            quantity: i.quantity,
+                            unitPrice: i.unit_price,
+                            discount: i.discount_percentage,
+                            total: i.total
+                        })),
+                        subtotal: order.total / 1.19, // Approximate for visual preview
+                        total: order.total,
+                        invoiceType: invoiceType
+                    }}
+                />
             )}
         </div>
     )

@@ -24,6 +24,7 @@ interface InvoiceConfirmationModalProps {
         invoiceType: 'POS' | 'Normal'
     }
     loading?: boolean
+    onInvoiceTypeChange?: (type: 'POS' | 'Normal') => void
 }
 
 export function InvoiceConfirmationModal({
@@ -31,7 +32,8 @@ export function InvoiceConfirmationModal({
     onClose,
     onConfirm,
     invoiceData,
-    loading = false
+    loading = false,
+    onInvoiceTypeChange
 }: InvoiceConfirmationModalProps) {
     // Close on Escape key
     useEffect(() => {
@@ -73,9 +75,28 @@ export function InvoiceConfirmationModal({
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white">Confirmar Factura</h2>
-                            <p className="text-blue-100 text-sm">
-                                {invoiceData.invoiceType === 'POS' ? 'Factura POS Legal' : 'Factura Normal'}
-                            </p>
+                            {onInvoiceTypeChange ? (
+                                <div className="flex bg-blue-800 rounded-lg p-1 mt-1">
+                                    <button
+                                        onClick={() => onInvoiceTypeChange('POS')}
+                                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${invoiceData.invoiceType === 'POS' ? 'bg-white text-blue-900' : 'text-blue-200 hover:text-white'
+                                            }`}
+                                    >
+                                        POS
+                                    </button>
+                                    <button
+                                        onClick={() => onInvoiceTypeChange('Normal')}
+                                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${invoiceData.invoiceType === 'Normal' ? 'bg-white text-blue-900' : 'text-blue-200 hover:text-white'
+                                            }`}
+                                    >
+                                        Normal
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-blue-100 text-sm">
+                                    {invoiceData.invoiceType === 'POS' ? 'Factura POS Legal' : 'Factura Normal'}
+                                </p>
+                            )}
                         </div>
                     </div>
                     {!loading && (
