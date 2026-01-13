@@ -405,7 +405,7 @@ export default function NewNormalInvoicePage() {
                         return acc + (discountedPrice * item.quantity)
                     }, 0),
                     total: calculateTotal(),
-                    invoiceType: 'Normal'
+                    invoiceType: 'NORMAL'
                 }}
             />
         </div >

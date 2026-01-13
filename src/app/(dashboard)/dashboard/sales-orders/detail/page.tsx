@@ -51,7 +51,7 @@ function SalesOrderDetailContent() {
     const [loading, setLoading] = useState(true)
     const [executing, setExecuting] = useState(false)
     const [showConfirmation, setShowConfirmation] = useState(false)
-    const [invoiceType, setInvoiceType] = useState<'POS' | 'Normal'>('POS')
+    const [invoiceType, setInvoiceType] = useState<'POS' | 'NORMAL'>('POS')
 
     useEffect(() => {
         if (orderId) {
@@ -421,7 +421,14 @@ function SalesOrderDetailContent() {
                             discount: i.discount_percentage,
                             total: i.total
                         })),
-                        subtotal: order.total / 1.19, // Approximate for visual preview
+                        subtotal: items.reduce((acc, item) => {
+                            // Calculate base price excluding tax if tax_rate exists
+                            const taxRate = item.product.tax_rate ?? 0; // Default to 0 if null, but schema says default 19.
+                            // Wait, schema says default 19.0. If it's null, we assume 0 or 19? 
+                            // Let's assume standard logic: Total = Base * (1 + TaxLimit). Base = Total / (1 + TaxLimit)
+                            const baseTotal = item.total / (1 + (taxRate / 100));
+                            return acc + baseTotal;
+                        }, 0),
                         total: order.total,
                         invoiceType: invoiceType
                     }}

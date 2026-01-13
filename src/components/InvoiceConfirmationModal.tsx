@@ -21,10 +21,10 @@ interface InvoiceConfirmationModalProps {
         items: InvoiceItem[]
         subtotal: number
         total: number
-        invoiceType: 'POS' | 'Normal'
+        invoiceType: 'POS' | 'NORMAL'
     }
     loading?: boolean
-    onInvoiceTypeChange?: (type: 'POS' | 'Normal') => void
+    onInvoiceTypeChange?: (type: 'POS' | 'NORMAL') => void
 }
 
 export function InvoiceConfirmationModal({
@@ -85,8 +85,8 @@ export function InvoiceConfirmationModal({
                                         POS
                                     </button>
                                     <button
-                                        onClick={() => onInvoiceTypeChange('Normal')}
-                                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${invoiceData.invoiceType === 'Normal' ? 'bg-white text-blue-900' : 'text-blue-200 hover:text-white'
+                                        onClick={() => onInvoiceTypeChange('NORMAL')}
+                                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${invoiceData.invoiceType === 'NORMAL' ? 'bg-white text-blue-900' : 'text-blue-200 hover:text-white'
                                             }`}
                                     >
                                         Normal
