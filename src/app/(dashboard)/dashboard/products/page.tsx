@@ -67,8 +67,8 @@ export default function ProductsPage() {
                 tax_rate: parseInt(formData.tax_rate)
             }
 
-            // Only include stock when creating new product
-            if (!editingProduct) {
+            // Only include stock when creating new product OR if user is admin when editing
+            if (!editingProduct || isAdmin) {
                 productData.stock = parseInt(formData.stock)
             }
 
@@ -137,6 +137,10 @@ export default function ProductsPage() {
         }).format(amount)
     }
 
+    const totalInventoryValue = products.reduce((sum, product) => {
+        return sum + (product.price * product.stock)
+    }, 0)
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
@@ -168,6 +172,28 @@ export default function ProductsPage() {
                     </div>
                 )}
 
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center glass-card">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg mr-4">
+                        <Package className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500">Total Productos</p>
+                        <h3 className="text-2xl font-bold text-gray-900">{products.length}</h3>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center glass-card">
+                    <div className="p-3 bg-green-50 text-green-600 rounded-lg mr-4">
+                        <Tag className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500">Valor Inventario (Venta)</p>
+                        <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(totalInventoryValue)}</h3>
+                    </div>
+                </div>
             </div>
 
             {/* Main Card */}
@@ -313,14 +339,14 @@ export default function ProductsPage() {
                                             <input
                                                 type="number"
                                                 required={!editingProduct}
-                                                disabled={!!editingProduct}
-                                                className={`block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${editingProduct ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
+                                                disabled={!!editingProduct && !isAdmin}
+                                                className={`block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${editingProduct && !isAdmin ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''
                                                     }`}
                                                 value={formData.stock}
                                                 onChange={e => setFormData({ ...formData, stock: e.target.value })}
                                                 placeholder={editingProduct ? 'No editable' : 'Cantidad inicial'}
                                             />
-                                            {editingProduct && (
+                                            {editingProduct && !isAdmin && (
                                                 <p className="mt-1 text-xs text-gray-500">
                                                     💡 Modifica stock desde entradas de inventario
                                                 </p>
