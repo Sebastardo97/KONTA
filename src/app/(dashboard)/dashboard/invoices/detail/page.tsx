@@ -54,7 +54,7 @@ function InvoiceDetailsContent() {
                         quantity,
                         unit_price,
                         total,
-                        products (name, sku)
+                        products (name, sku, code)
                     )
                 `)
                 .eq('id', invoiceId)
@@ -148,10 +148,6 @@ function InvoiceDetailsContent() {
                             TEL: {company.phone}
                         </p>
                         {company.city && <p className="text-xs text-gray-600 uppercase">{company.city}</p>}
-                        {/* Subtext mimicking the photo */}
-                        <p className="text-[10px] text-gray-500 mt-1 uppercase w-64 leading-tight">
-                            Cliente: {invoice.customers?.name || 'Cliente'}
-                        </p>
                     </div>
 
                     {/* Right: Remission Box */}
@@ -224,7 +220,7 @@ function InvoiceDetailsContent() {
                                 <tr key={idx}>
                                     <td className="py-2 text-center text-gray-500">{idx + 1}</td>
                                     <td className="py-2 text-center font-medium">{item.quantity}</td>
-                                    <td className="py-2 pl-4 text-gray-500">{item.products?.sku || '-'}</td>
+                                    <td className="py-2 pl-4 text-gray-500">{item.products?.code || item.products?.sku || '-'}</td>
                                     <td className="py-2 pl-4 uppercase font-medium">{item.products?.name}</td>
                                     <td className="py-2 text-right text-gray-600">{formatCurrency(item.unit_price)}</td>
                                     <td className="py-2 text-right font-bold text-gray-900">{formatCurrency(item.total)}</td>
@@ -233,8 +229,6 @@ function InvoiceDetailsContent() {
                             {/* Empty rows to push totals to bottom if needed, or just spacers */}
                             <tr className="border-t border-gray-300">
                                 <td colSpan={4}></td>
-                                <td className="py-2 text-right font-bold text-gray-600 border border-gray-300 bg-gray-50">SUBTOTAL</td>
-                                <td className="py-2 text-right font-bold text-gray-900 border border-gray-300">{formatCurrency(invoice.total / 1.19)}</td>
                             </tr>
                             <tr>
                                 <td colSpan={4}></td>
