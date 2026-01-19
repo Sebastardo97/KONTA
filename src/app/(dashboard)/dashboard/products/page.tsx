@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit, Trash2, Package, Tag, Loader2, FileSpreadsheet } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Package, Tag, Loader2, FileSpreadsheet, Eye, EyeOff } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
 import ImportProductsModal from './ImportProductsModal'
 
@@ -24,6 +24,7 @@ export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+    const [showTotal, setShowTotal] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [formData, setFormData] = useState({
         code: '',
@@ -191,7 +192,18 @@ export default function ProductsPage() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Valor Inventario (Venta)</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(totalInventoryValue)}</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-2xl font-bold text-gray-900">
+                                {showTotal ? formatCurrency(totalInventoryValue) : '******'}
+                            </h3>
+                            <button
+                                onClick={() => setShowTotal(!showTotal)}
+                                className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                                title={showTotal ? "Ocultar valor" : "Mostrar valor"}
+                            >
+                                {showTotal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
