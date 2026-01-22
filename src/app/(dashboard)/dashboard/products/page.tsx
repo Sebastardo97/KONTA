@@ -35,17 +35,48 @@ export default function ProductsPage() {
         tax_rate: '19'
     })
 
+    const [totalProducts, setTotalProducts] = useState(0)
+    const [totalValue, setTotalValue] = useState(0)
+
+    // Debounce search
     useEffect(() => {
-        fetchProducts()
+        const timer = setTimeout(() => {
+            fetchProducts(searchTerm)
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [searchTerm])
+
+    useEffect(() => {
+        // Initial load
+        fetchStats()
     }, [])
 
-    const fetchProducts = async () => {
+    const fetchStats = async () => {
+        // Fetch global stats (count and total value)
+        const { data } = await supabase.from('products').select('price, stock')
+        if (data) {
+            setTotalProducts(data.length)
+            const value = data.reduce((acc, curr) => acc + (curr.price * curr.stock), 0)
+            setTotalValue(value)
+        }
+    }
+
+    const fetchProducts = async (term = '') => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
+            let query = supabase
                 .from('products')
                 .select('*')
                 .order('created_at', { ascending: false })
+
+            if (term) {
+                query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`)
+            } else {
+                query = query.limit(50) // Show recent 50 by default for speed
+            }
+
+            const { data, error } = await query
 
             if (error) throw error
             setProducts(data || [])
@@ -89,7 +120,8 @@ export default function ProductsPage() {
             setIsModalOpen(false)
             setEditingProduct(null)
             setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
-            fetchProducts()
+            fetchProducts(searchTerm)
+            fetchStats()
         } catch (error) {
             console.error('Error saving product:', error)
             alert('Error al guardar el producto')
@@ -119,16 +151,14 @@ export default function ProductsPage() {
                 .eq('id', id)
 
             if (error) throw error
-            fetchProducts()
+            fetchProducts(searchTerm)
+            fetchStats()
         } catch (error) {
             console.error('Error deleting product:', error)
         }
     }
 
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Removed filteredProducts as products is now directly the source
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('es-CO', {
@@ -138,9 +168,7 @@ export default function ProductsPage() {
         }).format(amount)
     }
 
-    const totalInventoryValue = products.reduce((sum, product) => {
-        return sum + (product.price * product.stock)
-    }, 0)
+    // Stats come from separate state now
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -183,7 +211,7 @@ export default function ProductsPage() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-500">Total Productos</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{products.length}</h3>
+                        <h3 className="text-2xl font-bold text-gray-900">{totalProducts}</h3>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center glass-card">
@@ -194,7 +222,7 @@ export default function ProductsPage() {
                         <p className="text-sm font-medium text-gray-500">Valor Inventario (Venta)</p>
                         <div className="flex items-center gap-2">
                             <h3 className="text-2xl font-bold text-gray-900">
-                                {showTotal ? formatCurrency(totalInventoryValue) : '******'}
+                                {showTotal ? formatCurrency(totalValue) : '******'}
                             </h3>
                             <button
                                 onClick={() => setShowTotal(!showTotal)}
@@ -226,7 +254,7 @@ export default function ProductsPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Package className="h-4 w-4" />
-                        <span>{filteredProducts.length} productos</span>
+                        <span>{products.length} resultados</span>
                     </div>
                 </div>
 
@@ -237,7 +265,7 @@ export default function ProductsPage() {
                             <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500 mb-3" />
                             <p className="text-gray-500">Cargando inventario...</p>
                         </div>
-                    ) : filteredProducts.length === 0 ? (
+                    ) : products.length === 0 ? (
                         <div className="p-12 text-center">
                             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
                                 <Package className="h-6 w-6 text-gray-400" />
@@ -257,7 +285,7 @@ export default function ProductsPage() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-50">
-                                {filteredProducts.map((product) => (
+                                {products.map((product) => (
                                     <tr key={product.id} className="hover:bg-blue-50/50 transition-colors group">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
@@ -394,6 +422,7 @@ export default function ProductsPage() {
                 onClose={() => setIsImportModalOpen(false)}
                 onSuccess={() => {
                     fetchProducts()
+                    fetchStats()
                     // Optional: show a global success toast/message here
                 }}
             />

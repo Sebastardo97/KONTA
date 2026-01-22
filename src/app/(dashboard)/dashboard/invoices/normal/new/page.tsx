@@ -16,6 +16,7 @@ type InvoiceItem = {
     unitPrice: number
     discount: number
     stock: number // [NEW] Added for validation
+    taxRate: number
 }
 
 export default function NewNormalInvoicePage() {
@@ -94,7 +95,8 @@ export default function NewNormalInvoicePage() {
                 quantity: 1,
                 unitPrice: product.price,
                 discount: 0,
-                stock: product.stock // Store stock limit
+                stock: product.stock, // Store stock limit
+                taxRate: product.tax_rate || 0
             }])
         }
     }
@@ -134,11 +136,16 @@ export default function NewNormalInvoicePage() {
         setItems(items.filter(i => i.productId !== productId))
     }
 
-    const calculateTotal = () => {
+    const calculateTotals = () => {
         return items.reduce((acc, item) => {
-            const discountedPrice = item.unitPrice * (1 - item.discount / 100)
-            return acc + (discountedPrice * item.quantity)
-        }, 0)
+            const subtotal = item.unitPrice * item.quantity * (1 - item.discount / 100)
+            const tax = subtotal * (item.taxRate / 100)
+            return {
+                subtotal: acc.subtotal + subtotal,
+                tax: acc.tax + tax,
+                total: acc.total + subtotal + tax
+            }
+        }, { subtotal: 0, tax: 0, total: 0 })
     }
 
     const handleSubmit = async () => {
@@ -183,7 +190,7 @@ export default function NewNormalInvoicePage() {
                 p_customer_id: selectedCustomer.id,
                 p_seller_id: selectedSeller,
                 p_items: rpcItems,
-                p_total: calculateTotal(),
+                p_total: calculateTotals().total, // Sent for reference, backend recalculates
                 p_invoice_type: 'NORMAL'
             })
 
@@ -361,9 +368,19 @@ export default function NewNormalInvoicePage() {
 
             {/* Total and Submit */}
             <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-                <div className="flex justify-between text-xl font-bold">
-                    <span>Total:</span>
-                    <span className="text-green-600">${calculateTotal().toLocaleString()}</span>
+                <div className="space-y-2">
+                    <div className="flex justify-between text-gray-600">
+                        <span>Subtotal:</span>
+                        <span>${calculateTotals().subtotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                        <span>IVA / Impuestos:</span>
+                        <span>${calculateTotals().tax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold border-t pt-2">
+                        <span>Total:</span>
+                        <span className="text-green-600">${calculateTotals().total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -398,13 +415,10 @@ export default function NewNormalInvoicePage() {
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
                         discount: item.discount,
-                        total: item.unitPrice * item.quantity * (1 - item.discount / 100)
+                        total: (item.unitPrice * item.quantity * (1 - item.discount / 100)) * (1 + item.taxRate / 100)
                     })),
-                    subtotal: items.reduce((acc, item) => {
-                        const discountedPrice = item.unitPrice * (1 - item.discount / 100)
-                        return acc + (discountedPrice * item.quantity)
-                    }, 0),
-                    total: calculateTotal(),
+                    subtotal: calculateTotals().subtotal,
+                    total: calculateTotals().total,
                     invoiceType: 'NORMAL'
                 }}
             />

@@ -169,7 +169,7 @@ export function InvoiceConfirmationModal({
                                 <span className="font-medium text-gray-900">{formatCurrency(invoiceData.subtotal)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">IVA (19%)</span>
+                                <span className="text-gray-600">IVA / Impuestos</span>
                                 <span className="font-medium text-gray-900">{formatCurrency(calculateIVA())}</span>
                             </div>
                             <div className="border-t border-gray-300 pt-2 mt-2">
