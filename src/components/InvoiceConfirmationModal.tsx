@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 
 interface InvoiceItem {
     productName: string
+    productCode?: string
     quantity: number
     unitPrice: number
     discount: number
@@ -139,6 +140,7 @@ export function InvoiceConfirmationModal({
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600">Referencia</th>
                                         <th className="text-left px-4 py-2 font-medium text-gray-600">Producto</th>
                                         <th className="text-center px-4 py-2 font-medium text-gray-600">Cant.</th>
                                         <th className="text-right px-4 py-2 font-medium text-gray-600">P. Unit.</th>
@@ -149,6 +151,7 @@ export function InvoiceConfirmationModal({
                                 <tbody className="divide-y divide-gray-100">
                                     {invoiceData.items.map((item, index) => (
                                         <tr key={index} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 font-mono text-xs text-gray-500">{item.productCode || '-'}</td>
                                             <td className="px-4 py-3 font-medium text-gray-900">{item.productName}</td>
                                             <td className="px-4 py-3 text-center text-gray-700">{item.quantity}</td>
                                             <td className="px-4 py-3 text-right text-gray-700">{formatCurrency(item.unitPrice)}</td>

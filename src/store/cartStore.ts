@@ -3,6 +3,7 @@ import { create } from 'zustand'
 export type CartItem = {
     productId: string
     name: string
+    code?: string
     price: number
     quantity: number
     stock: number // [NEW] Added to track available stock
@@ -14,6 +15,7 @@ export type CartItem = {
 export interface Product {
     id: string
     name: string
+    code?: string
     price: number
     stock: number | null
     tax_rate?: number
@@ -62,6 +64,7 @@ export const useCartStore = create<CartState>((set, get) => ({
                 items: [...items, {
                     productId: product.id,
                     name: product.name,
+                    code: product.code,
                     price: product.price,
                     quantity: 1,
                     stock: product.stock,

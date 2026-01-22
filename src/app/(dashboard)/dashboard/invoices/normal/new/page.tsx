@@ -12,6 +12,7 @@ import { useRole } from '@/hooks/useRole'
 type InvoiceItem = {
     productId: string
     productName: string
+    productCode: string
     quantity: number
     unitPrice: number
     discount: number
@@ -94,6 +95,7 @@ export default function NewNormalInvoicePage() {
             setItems([...items, {
                 productId: product.id,
                 productName: product.name,
+                productCode: product.code,
                 quantity: 1,
                 unitPrice: product.price,
                 discount: 0,
@@ -307,7 +309,10 @@ export default function NewNormalInvoicePage() {
                             onClick={() => addProduct(product)}
                             className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm"
                         >
-                            <p className="font-medium truncate">{product.name}</p>
+                            <div className="flex justify-between items-start w-full">
+                                <p className="font-medium truncate">{product.name}</p>
+                                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">{product.code}</span>
+                            </div>
                             <div className="flex justify-between items-center w-full mt-1">
                                 <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
                                 <span className={`text-xs px-2 py-1 rounded-full ${product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -334,7 +339,10 @@ export default function NewNormalInvoicePage() {
                             <div key={item.productId} className="border rounded-lg p-3 space-y-2">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <h4 className="font-medium">{item.productName}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-medium">{item.productName}</h4>
+                                            <span className="text-xs font-mono text-gray-400">{item.productCode}</span>
+                                        </div>
                                         <p className="text-sm text-gray-600">
                                             ${item.unitPrice.toLocaleString()} x {item.quantity} = ${(item.unitPrice * item.quantity * (1 - item.discount / 100)).toLocaleString()}
                                         </p>
@@ -414,6 +422,7 @@ export default function NewNormalInvoicePage() {
                     sellerName: sellerName,
                     items: items.map(item => ({
                         productName: item.productName,
+                        productCode: item.productCode,
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
                         discount: item.discount,

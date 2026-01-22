@@ -267,7 +267,10 @@ export default function POSPage() {
                             <div key={item.productId} className="bg-gray-50 p-3 rounded-lg space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1">
-                                        <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-medium text-gray-900 text-sm">{item.name}</h4>
+                                            <span className="text-[10px] font-mono text-gray-400">{item.code}</span>
+                                        </div>
                                         <p className="text-blue-600 font-bold text-sm">
                                             ${(item.price * item.quantity * (1 - item.discount / 100)).toLocaleString()}
                                         </p>
@@ -352,6 +355,7 @@ export default function POSPage() {
                     sellerName: sellerName,
                     items: items.map(item => ({
                         productName: item.name,
+                        productCode: item.code,
                         quantity: item.quantity,
                         unitPrice: item.price,
                         discount: item.discount,
