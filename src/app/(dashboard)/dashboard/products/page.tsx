@@ -21,7 +21,11 @@ export default function ProductsPage() {
     const isAdmin = role === 'admin'
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
+    const [page, setPage] = useState(0)
+    const PAGE_SIZE = 50
+    const [hasMore, setHasMore] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isImportModalOpen, setIsImportModalOpen] = useState(false)
     const [showTotal, setShowTotal] = useState(false)
@@ -41,7 +45,8 @@ export default function ProductsPage() {
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchProducts(searchTerm)
+            setPage(0)
+            fetchProducts(searchTerm, 0)
         }, 500)
 
         return () => clearTimeout(timer)
@@ -63,9 +68,14 @@ export default function ProductsPage() {
         }
     }
 
-    const fetchProducts = async (term = '') => {
+    const fetchProducts = async (term = '', pageNum = 0) => {
         try {
-            setLoading(true)
+            if (pageNum === 0) {
+                setLoading(true)
+            } else {
+                setLoadingMore(true)
+            }
+
             let query = supabase
                 .from('products')
                 .select('*')
@@ -73,19 +83,35 @@ export default function ProductsPage() {
 
             if (term) {
                 query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`)
-            } else {
-                query = query.limit(50) // Show recent 50 by default for speed
             }
+
+            const from = pageNum * PAGE_SIZE
+            const to = from + PAGE_SIZE - 1
+            query = query.range(from, to)
 
             const { data, error } = await query
 
             if (error) throw error
-            setProducts(data || [])
+
+            if (pageNum === 0) {
+                setProducts(data || [])
+            } else {
+                setProducts(prev => [...prev, ...(data || [])])
+            }
+
+            setHasMore((data || []).length === PAGE_SIZE)
         } catch (error) {
             console.error('Error fetching products:', error)
         } finally {
             setLoading(false)
+            setLoadingMore(false)
         }
+    }
+
+    const loadMore = () => {
+        const nextPage = page + 1
+        setPage(nextPage)
+        fetchProducts(searchTerm, nextPage)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +147,9 @@ export default function ProductsPage() {
             setIsModalOpen(false)
             setEditingProduct(null)
             setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
-            fetchProducts(searchTerm)
+            setFormData({ code: '', name: '', description: '', price: '', stock: '', tax_rate: '19' })
+            fetchProducts(searchTerm, 0)
+            setPage(0)
             fetchStats()
         } catch (error) {
             console.error('Error saving product:', error)
@@ -152,7 +180,8 @@ export default function ProductsPage() {
                 .eq('id', id)
 
             if (error) throw error
-            fetchProducts(searchTerm)
+            fetchProducts(searchTerm, 0)
+            setPage(0)
             fetchStats()
         } catch (error) {
             console.error('Error deleting product:', error)
@@ -336,6 +365,26 @@ export default function ProductsPage() {
                         </table>
                     )}
                 </div>
+
+                {/* Load More Button */}
+                {!loading && hasMore && products.length > 0 && (
+                    <div className="p-4 border-t border-gray-100 bg-gray-50/30 text-center">
+                        <button
+                            onClick={loadMore}
+                            disabled={loadingMore}
+                            className="inline-flex items-center px-6 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50"
+                        >
+                            {loadingMore ? (
+                                <>
+                                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                                    Cargando más...
+                                </>
+                            ) : (
+                                'Cargar más productos'
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Modal */}
