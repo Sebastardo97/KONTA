@@ -88,7 +88,7 @@ export default function POSPage() {
             const { data } = await supabase
                 .from('products')
                 .select('*')
-                .or(`name.ilike.%${term}%,sku.ilike.%${term}%`)
+                .or(`name.ilike.%${term}%,code.ilike.%${term}%`)
                 .limit(10)
             if (data) setProducts(data)
         } else if (term.length === 0) {
@@ -180,7 +180,7 @@ export default function POSPage() {
                                     <ShoppingCart className="h-8 w-8" />
                                 </div>
                                 <h3 className="font-medium text-gray-900 line-clamp-2">{product.name}</h3>
-                                <p className="text-sm text-gray-500 mb-2">{product.sku}</p>
+                                <p className="text-sm text-gray-500 mb-2">{product.code}</p>
                                 <div className="mt-auto flex justify-between w-full items-center">
                                     <span className="font-bold text-lg text-blue-600">${product.price.toLocaleString()}</span>
                                     <span className={cn("text-xs px-2 py-1 rounded-full", product.stock > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>

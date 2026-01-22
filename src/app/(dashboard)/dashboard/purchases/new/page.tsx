@@ -34,7 +34,7 @@ export default function NewPurchasePage() {
             const { data } = await supabase
                 .from('products')
                 .select('*')
-                .ilike('name', `%${term}%`)
+                .or(`name.ilike.%${term}%,code.ilike.%${term}%`)
                 .limit(5)
             if (data) setSearchResults(data)
         } else {

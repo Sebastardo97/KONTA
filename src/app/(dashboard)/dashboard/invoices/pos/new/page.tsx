@@ -71,7 +71,7 @@ export default function NewPOSInvoicePage() {
             const { data } = await supabase
                 .from('products')
                 .select('*')
-                .or(`name.ilike.%${term}%,sku.ilike.%${term}%`)
+                .or(`name.ilike.%${term}%,code.ilike.%${term}%`)
                 .limit(10)
             if (data) setProducts(data)
         } else if (term.length === 0) {
@@ -315,7 +315,7 @@ export default function NewPOSInvoicePage() {
                     <input
                         type="text"
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg"
-                        placeholder="Buscar por nombre o SKU..."
+                        placeholder="Buscar por nombre o Código..."
                         value={searchTerm}
                         onChange={(e) => searchProducts(e.target.value)}
                     />

@@ -49,7 +49,9 @@ export default function NewNormalInvoicePage() {
 
     const fetchProducts = async (term = '') => {
         let query = supabase.from('products').select('*').limit(50)
-        if (term) query = query.ilike('name', `%${term}%`)
+        if (term) {
+            query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`)
+        }
 
         const { data } = await query
         if (data) setProducts(data)
@@ -293,7 +295,7 @@ export default function NewNormalInvoicePage() {
                     <input
                         type="text"
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg"
-                        placeholder="Buscar por nombre o SKU..."
+                        placeholder="Buscar por nombre o Código..."
                         value={searchTerm}
                         onChange={(e) => searchProducts(e.target.value)}
                     />
