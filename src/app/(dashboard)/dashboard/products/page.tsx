@@ -54,7 +54,7 @@ export default function ProductsPage() {
 
     const fetchStats = async () => {
         // Fetch global stats (count and total value)
-        const { data } = await supabase.from('products').select('price, stock')
+        const { data } = await supabase.from('products').select('price, stock').limit(10000)
         if (data) {
             setTotalProducts(data.length)
             const value = data.reduce((acc, curr) => acc + (curr.price * curr.stock), 0)
