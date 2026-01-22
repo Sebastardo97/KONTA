@@ -53,12 +53,13 @@ export default function ProductsPage() {
     }, [])
 
     const fetchStats = async () => {
-        // Fetch global stats (count and total value)
-        const { data } = await supabase.from('products').select('price, stock').limit(10000)
-        if (data) {
-            setTotalProducts(data.length)
-            const value = data.reduce((acc, curr) => acc + (curr.price * curr.stock), 0)
-            setTotalValue(value)
+        // Use RPC to get accurate global stats regardless of row limits
+        const { data, error } = await supabase.rpc('get_inventory_stats')
+        if (data && data[0]) {
+            setTotalProducts(data[0].total_count)
+            setTotalValue(data[0].total_value)
+        } else if (error) {
+            console.error('Error fetching global stats:', error)
         }
     }
 
