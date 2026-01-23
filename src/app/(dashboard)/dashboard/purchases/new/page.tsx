@@ -51,6 +51,7 @@ export default function NewPurchasePage() {
         setItems([...items, {
             product_id: product.id,
             name: product.name,
+            code: product.code,
             quantity: 1,
             unit_cost: 0, // User must input this
             total_cost: 0
@@ -225,8 +226,11 @@ export default function NewPurchasePage() {
                                                 className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 flex justify-between items-center group/item"
                                                 onClick={() => addItem(p)}
                                             >
-                                                <div>
-                                                    <p className="font-medium text-gray-900 group-hover/item:text-blue-700">{p.name}</p>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-center">
+                                                        <p className="font-medium text-gray-900 group-hover/item:text-blue-700">{p.name}</p>
+                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">{p.code}</span>
+                                                    </div>
                                                     <p className="text-xs text-gray-500">Stock actual: {p.stock}</p>
                                                 </div>
                                                 <Plus className="h-4 w-4 text-gray-300 group-hover/item:text-blue-500" />
@@ -262,7 +266,12 @@ export default function NewPurchasePage() {
                                                 </tr>
                                             ) : items.map((item, idx) => (
                                                 <tr key={idx} className="group hover:bg-blue-50/10 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-gray-700">{item.name}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium text-gray-700">{item.name}</span>
+                                                            <span className="text-[10px] font-mono text-gray-400">{item.code}</span>
+                                                        </div>
+                                                    </td>
                                                     <td className="px-4 py-3">
                                                         <input
                                                             type="number"

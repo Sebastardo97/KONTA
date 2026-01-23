@@ -11,6 +11,7 @@ import { useRole } from '@/hooks/useRole'
 type OrderItem = {
     productId: string
     productName: string
+    productCode: string
     quantity: number
     unitPrice: number
     discount: number
@@ -102,6 +103,7 @@ export default function NewSalesOrderPage() {
             setItems([...items, {
                 productId: product.id,
                 productName: product.name,
+                productCode: product.code,
                 quantity: 1,
                 unitPrice: product.price,
                 discount: 0,
@@ -312,7 +314,10 @@ export default function NewSalesOrderPage() {
                             onClick={() => addProduct(product)}
                             className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm"
                         >
-                            <p className="font-medium truncate">{product.name}</p>
+                            <div className="flex justify-between items-start w-full">
+                                <p className="font-medium truncate">{product.name}</p>
+                                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1 rounded">{product.code}</span>
+                            </div>
                             <p className="text-blue-600 font-bold">${product.price.toLocaleString()}</p>
                         </button>
                     ))}
@@ -334,7 +339,10 @@ export default function NewSalesOrderPage() {
                             <div key={item.productId} className="border rounded-lg p-3 space-y-2">
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                        <h4 className="font-medium">{item.productName}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-medium">{item.productName}</h4>
+                                            <span className="text-xs font-mono text-gray-400">{item.productCode}</span>
+                                        </div>
                                         <div className="flex gap-4 text-sm text-gray-600">
                                             <span>${item.unitPrice.toLocaleString()} x {item.quantity}</span>
                                             {item.quantity > item.stock && (
