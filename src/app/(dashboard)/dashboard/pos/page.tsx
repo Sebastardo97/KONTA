@@ -7,6 +7,7 @@ import { Search, ShoppingCart, Trash2, Plus, Minus, CreditCard, Users } from 'lu
 import { cn } from '@/lib/utils'
 import { DiscountInput } from '@/components/DiscountInput'
 import { InvoiceConfirmationModal } from '@/components/InvoiceConfirmationModal'
+import { QuantityModal } from '@/components/QuantityModal'
 
 export default function POSPage() {
     const [products, setProducts] = useState<any[]>([])
@@ -15,6 +16,8 @@ export default function POSPage() {
     const [processing, setProcessing] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [sellerName, setSellerName] = useState('')
+    const [showQuantityModal, setShowQuantityModal] = useState(false)
+    const [selectedProduct, setSelectedProduct] = useState<any>(null)
 
     const { items, addItem, removeItem, updateQuantity, updateDiscount, total, clearCart } = useCartStore()
 
@@ -105,6 +108,20 @@ export default function POSPage() {
         setShowConfirmModal(true)
     }
 
+    const handleProductClick = (product: any) => {
+        setSelectedProduct(product)
+        setShowQuantityModal(true)
+    }
+
+    const handleAddWithQuantity = (quantity: number) => {
+        if (selectedProduct) {
+            // Add product with specified quantity
+            for (let i = 0; i < quantity; i++) {
+                addItem(selectedProduct)
+            }
+        }
+    }
+
     const processCheckout = async () => {
         if (items.length === 0) return
         setProcessing(true)
@@ -173,7 +190,7 @@ export default function POSPage() {
                         {products.map((product) => (
                             <button
                                 key={product.id}
-                                onClick={() => addItem(product)}
+                                onClick={() => handleProductClick(product)}
                                 className="flex flex-col items-start p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left group bg-white"
                             >
                                 <div className="w-full h-24 bg-gray-100 rounded-md mb-3 flex items-center justify-center text-gray-400 group-hover:text-blue-500 transition-colors">
@@ -343,6 +360,19 @@ export default function POSPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Quantity Modal */}
+            <QuantityModal
+                isOpen={showQuantityModal}
+                onClose={() => setShowQuantityModal(false)}
+                onConfirm={handleAddWithQuantity}
+                product={selectedProduct ? {
+                    name: selectedProduct.name,
+                    code: selectedProduct.code,
+                    price: selectedProduct.price,
+                    stock: selectedProduct.stock
+                } : null}
+            />
 
             {/* Invoice Confirmation Modal */}
             <InvoiceConfirmationModal

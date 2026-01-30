@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { DiscountInput } from '@/components/DiscountInput'
 import { SellerSelect } from '@/components/SellerSelect'
 import { InvoiceConfirmationModal } from '@/components/InvoiceConfirmationModal'
+import { QuantityModal } from '@/components/QuantityModal'
 import { Search, Plus, Trash2, Save, Users } from 'lucide-react'
 import { useRole } from '@/hooks/useRole'
 
@@ -32,6 +33,8 @@ export default function NewNormalInvoicePage() {
     const [sellerName, setSellerName] = useState('')
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [showQuantityModal, setShowQuantityModal] = useState(false)
+    const [selectedProductForModal, setSelectedProductForModal] = useState<any>(null)
 
     const router = useRouter()
     const { isAdmin, userId } = useRole()
@@ -77,29 +80,42 @@ export default function NewNormalInvoicePage() {
     }
 
     const addProduct = (product: any) => {
-        // VALIDATION: Check stock before adding
+        // VALIDATION: Check stock before showing modal
         if (!product.stock || product.stock <= 0) {
             alert(`❌ "${product.name}" está agotado. No hay unidades disponibles.`)
             return
         }
 
+        // Show quantity modal
+        setSelectedProductForModal(product)
+        setShowQuantityModal(true)
+    }
+
+    const handleAddWithQuantity = (quantity: number) => {
+        if (!selectedProductForModal) return
+
+        const product = selectedProductForModal
         const existing = items.find(i => i.productId === product.id)
+
         if (existing) {
-            // Check if adding one more would exceed stock
-            if (existing.quantity + 1 > product.stock) {
+            // Update existing item quantity
+            const newQuantity = existing.quantity + quantity
+            if (newQuantity > product.stock) {
                 alert(`⚠️ Solo hay ${product.stock} unidades disponibles de "${product.name}"`)
-                return
+                updateQuantity(product.id, product.stock)
+            } else {
+                updateQuantity(product.id, newQuantity)
             }
-            updateQuantity(product.id, existing.quantity + 1)
         } else {
+            // Add new item with specified quantity
             setItems([...items, {
                 productId: product.id,
                 productName: product.name,
                 productCode: product.code,
-                quantity: 1,
+                quantity: quantity,
                 unitPrice: product.price,
                 discount: 0,
-                stock: product.stock, // Store stock limit
+                stock: product.stock,
                 taxRate: product.tax_rate || 0
             }])
         }
@@ -307,7 +323,7 @@ export default function NewNormalInvoicePage() {
                         <button
                             key={product.id}
                             onClick={() => addProduct(product)}
-                            className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm"
+                            className="p-2 border rounded-lg hover:border-blue-500 hover:bg-blue-50 text-left text-sm transition-all"
                         >
                             <div className="flex justify-between items-start w-full">
                                 <p className="font-medium truncate">{product.name}</p>
@@ -410,6 +426,19 @@ export default function NewNormalInvoicePage() {
                 </div>
             </div>
 
+
+            {/* Quantity Modal */}
+            <QuantityModal
+                isOpen={showQuantityModal}
+                onClose={() => setShowQuantityModal(false)}
+                onConfirm={handleAddWithQuantity}
+                product={selectedProductForModal ? {
+                    name: selectedProductForModal.name,
+                    code: selectedProductForModal.code,
+                    price: selectedProductForModal.price,
+                    stock: selectedProductForModal.stock
+                } : null}
+            />
 
             {/* Invoice Confirmation Modal */}
             <InvoiceConfirmationModal
