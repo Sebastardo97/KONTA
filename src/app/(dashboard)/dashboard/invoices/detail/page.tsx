@@ -211,41 +211,45 @@ function InvoiceDetailsContent() {
 
                                 {/* Customer Info Box */}
                                 <div className="border-t border-b border-gray-300 py-1 mb-2">
-                                    <div className="grid grid-cols-2 gap-x-3 gap-y-0 text-[8px] leading-tight">
-                                        <div className="flex">
-                                            <span className="font-bold w-14 text-gray-600">Cliente:</span>
-                                            <span className="uppercase font-medium">{invoice.customers?.name}</span>
-                                        </div>
-                                        <div className="flex">
-                                            <span className="font-bold w-20 text-gray-600">Fecha inicio:</span>
-                                            <span>{new Date(invoice.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                                        </div>
-
-                                        <div className="flex">
-                                            <span className="font-bold w-14 text-gray-600">CC/NIT:</span>
-                                            <span>{invoice.customers?.nit_cedula}</span>
-                                        </div>
-                                        <div className="flex">
-                                            <span className="font-bold w-20 text-gray-600">Vencimiento:</span>
-                                            <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                                        </div>
-
-                                        <div className="flex">
-                                            <span className="font-bold w-14 text-gray-600">Dir:</span>
-                                            <span className="uppercase text-[7px]">{invoice.customers?.address || 'N/A'}</span>
-                                        </div>
-                                        <div className="flex">
-                                            <span className="font-bold w-20 text-gray-600">Vendedor:</span>
-                                            <span className="uppercase text-[7px]">{invoice.seller?.full_name || 'N/A'}</span>
+                                    <div className="flex gap-4 mb-2 text-[8px] leading-tight w-full">
+                                        {/* Left Column: Customer Info */}
+                                        <div className="flex-1 space-y-0.5">
+                                            <div className="flex">
+                                                <span className="font-bold w-14 text-gray-600">Cliente:</span>
+                                                <span className="uppercase font-medium">{invoice.customers?.name}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-14 text-gray-600">CC/NIT:</span>
+                                                <span>{invoice.customers?.nit_cedula}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-14 text-gray-600">Dir:</span>
+                                                <span className="uppercase text-[7px]">{invoice.customers?.address || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-14 text-gray-600">Tel:</span>
+                                                <span>{invoice.customers?.phone || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-14 text-gray-600">Ciudad:</span>
+                                                <span className="uppercase">{invoice.customers?.city || 'N/A'}</span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex">
-                                            <span className="font-bold w-14 text-gray-600">Tel:</span>
-                                            <span>{invoice.customers?.phone || 'N/A'}</span>
-                                        </div>
-                                        <div className="flex">
-                                            <span className="font-bold w-14 text-gray-600">Ciudad:</span>
-                                            <span className="uppercase">{invoice.customers?.city || 'N/A'}</span>
+                                        {/* Right Column: Order Info */}
+                                        <div className="flex-1 space-y-0.5">
+                                            <div className="flex">
+                                                <span className="font-bold w-20 text-gray-600">Fecha inicio:</span>
+                                                <span>{new Date(invoice.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-20 text-gray-600">Vencimiento:</span>
+                                                <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                                            </div>
+                                            <div className="flex">
+                                                <span className="font-bold w-20 text-gray-600">Vendedor:</span>
+                                                <span className="uppercase text-[7px]">{invoice.seller?.full_name || 'N/A'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
