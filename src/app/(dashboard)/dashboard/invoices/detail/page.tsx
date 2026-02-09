@@ -189,16 +189,16 @@ function InvoiceDetailsContent() {
                                 <div className="flex justify-between items-start mb-2">
                                     {/* Left: Company Info */}
                                     <div className="space-y-0">
-                                        <h1 className="text-sm font-bold text-gray-800 uppercase tracking-tight leading-tight">
+                                        <h1 className="text-xl font-bold text-gray-800 uppercase tracking-tight leading-tight">
                                             {company.name || 'ORCHIS ACCESORIOS'}
                                         </h1>
-                                        <p className="text-[8px] text-gray-600 font-bold leading-tight">
+                                        <p className="text-xs text-gray-600 font-bold leading-tight">
                                             {company.address || 'CRA 22 SUR #154-74'}
                                         </p>
-                                        <p className="text-[8px] text-gray-600 leading-tight">
+                                        <p className="text-xs text-gray-600 leading-tight">
                                             TEL: {company.phone || '3147272285'}
                                         </p>
-                                        <p className="text-[8px] text-gray-600 uppercase leading-tight">
+                                        <p className="text-xs text-gray-600 uppercase leading-tight">
                                             {company.city || 'IBAGUÉ'}
                                         </p>
                                     </div>
@@ -213,14 +213,14 @@ function InvoiceDetailsContent() {
                                     </div>
 
                                     {/* Right: Remission Box */}
-                                    <div className="border border-gray-400 rounded overflow-hidden" style={{ width: '180px' }}>
-                                        <div className="bg-gray-100 border-b border-gray-400 py-0.5 text-center">
-                                            <h2 className="text-[9px] font-bold text-gray-700">* REMISIÓN *</h2>
+                                    <div className="border border-gray-400 rounded overflow-hidden" style={{ width: '220px' }}>
+                                        <div className="bg-gray-100 border-b border-gray-400 py-1 text-center">
+                                            <h2 className="text-xs font-bold text-gray-700">* REMISIÓN *</h2>
                                         </div>
                                         <div className="py-1 text-center">
-                                            <p className="text-base font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
+                                            <p className="text-2xl font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
                                         </div>
-                                        <div className="bg-gray-100 border-t border-gray-400 py-0.5 px-1 flex justify-between text-[7px] text-gray-600">
+                                        <div className="bg-gray-100 border-t border-gray-400 py-0.5 px-1 flex justify-between text-[10px] text-gray-600">
                                             <span>Fecha: {new Date(invoice.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                             <span>Vence: {new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                         </div>
@@ -228,8 +228,8 @@ function InvoiceDetailsContent() {
                                 </div>
 
                                 {/* Customer Info Box */}
-                                <div className="border-t border-b border-gray-300 py-1 mb-2">
-                                    <div className="flex gap-4 mb-2 text-[8px] leading-tight w-full">
+                                <div className="border-t border-b border-gray-300 py-2 mb-2">
+                                    <div className="flex gap-4 mb-2 text-xs leading-tight w-full">
                                         {/* Left Column: Customer Info */}
                                         <div className="flex-1 space-y-0.5">
                                             <div className="flex">
@@ -241,8 +241,8 @@ function InvoiceDetailsContent() {
                                                 <span>{invoice.customers?.nit_cedula}</span>
                                             </div>
                                             <div className="flex">
-                                                <span className="font-bold w-14 text-gray-600">Dir:</span>
-                                                <span className="uppercase text-[7px]">{invoice.customers?.address || 'N/A'}</span>
+                                                <span className="font-bold w-16 text-gray-600">Dir:</span>
+                                                <span className="uppercase text-[10px]">{invoice.customers?.address || 'N/A'}</span>
                                             </div>
                                             <div className="flex">
                                                 <span className="font-bold w-14 text-gray-600">Tel:</span>
@@ -265,8 +265,8 @@ function InvoiceDetailsContent() {
                                                 <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                             </div>
                                             <div className="flex">
-                                                <span className="font-bold w-20 text-gray-600">Vendedor:</span>
-                                                <span className="uppercase text-[7px]">{invoice.seller?.full_name || 'N/A'}</span>
+                                                <span className="font-bold w-24 text-gray-600">Vendedor:</span>
+                                                <span className="uppercase text-[10px]">{invoice.seller?.full_name || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>
