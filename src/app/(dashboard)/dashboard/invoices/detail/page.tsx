@@ -150,7 +150,16 @@ function InvoiceDetailsContent() {
             </div>
 
             {/* Receipt Container - "Remisión" Style */}
-            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 print:shadow-none print:border-none print:p-0 text-sm font-sans text-gray-800">
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 print:shadow-none print:border-none print:p-0 text-sm font-sans text-gray-800 relative overflow-hidden">
+
+                {/* Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.08]">
+                    <img
+                        src="/watermark.jpg"
+                        alt="Watermark"
+                        className="w-3/4 object-contain grayscale"
+                    />
+                </div>
 
                 <style jsx global>{`
                     @media print {
