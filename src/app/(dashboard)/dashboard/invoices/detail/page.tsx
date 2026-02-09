@@ -203,6 +203,15 @@ function InvoiceDetailsContent() {
                                         </p>
                                     </div>
 
+                                    {/* Center: Logo */}
+                                    <div className="flex-1 flex justify-center px-4">
+                                        <img
+                                            src="/watermark.jpg"
+                                            alt="Logo"
+                                            className="h-16 object-contain"
+                                        />
+                                    </div>
+
                                     {/* Right: Remission Box */}
                                     <div className="border border-gray-400 rounded overflow-hidden" style={{ width: '180px' }}>
                                         <div className="bg-gray-100 border-b border-gray-400 py-0.5 text-center">
