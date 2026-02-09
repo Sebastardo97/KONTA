@@ -153,11 +153,11 @@ function InvoiceDetailsContent() {
             <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 print:shadow-none print:border-none print:p-0 text-sm font-sans text-gray-800 relative overflow-hidden">
 
                 {/* Watermark */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.15]">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.12] print:fixed print:inset-0 print:opacity-[0.10]">
                     <img
                         src="/watermark.jpg"
                         alt="Watermark"
-                        className="w-3/4 object-contain grayscale"
+                        className="w-2/3 object-contain grayscale"
                     />
                 </div>
 
