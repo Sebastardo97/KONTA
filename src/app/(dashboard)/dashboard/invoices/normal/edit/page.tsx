@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { DiscountInput } from '@/components/DiscountInput'
@@ -27,7 +27,7 @@ const isUUID = (str: string) => {
     return regex.test(str);
 }
 
-export default function EditNormalInvoicePage() {
+function EditNormalInvoiceContent() {
     const [items, setItems] = useState<InvoiceItem[]>([])
     const [searchTerm, setSearchTerm] = useState('')
     const [products, setProducts] = useState<any[]>([])
@@ -555,5 +555,13 @@ export default function EditNormalInvoicePage() {
                 }}
             />
         </div >
+    )
+}
+
+export default function EditNormalInvoicePage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-96">Cargando...</div>}>
+            <EditNormalInvoiceContent />
+        </Suspense>
     )
 }
