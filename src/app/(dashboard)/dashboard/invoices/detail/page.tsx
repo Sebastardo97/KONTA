@@ -153,7 +153,7 @@ function InvoiceDetailsContent() {
             <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 print:shadow-none print:border-none print:p-0 text-sm font-sans text-gray-800 relative overflow-hidden">
 
                 {/* Watermark */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.25] print:fixed print:inset-0 print:opacity-[0.25]">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.25]">
                     <img
                         src="/watermark.jpg"
                         alt="Watermark"
@@ -189,16 +189,16 @@ function InvoiceDetailsContent() {
                                 <div className="flex justify-between items-start mb-2">
                                     {/* Left: Company Info */}
                                     <div className="space-y-0">
-                                        <h1 className="text-xl font-bold text-gray-800 uppercase tracking-tight leading-tight">
+                                        <h1 className="text-sm font-bold text-gray-800 uppercase tracking-tight leading-tight">
                                             {company.name || 'ORCHIS ACCESORIOS'}
                                         </h1>
-                                        <p className="text-xs text-gray-600 font-bold leading-tight">
+                                        <p className="text-[8px] text-gray-600 font-bold leading-tight">
                                             {company.address || 'CRA 22 SUR #154-74'}
                                         </p>
-                                        <p className="text-xs text-gray-600 leading-tight">
+                                        <p className="text-[8px] text-gray-600 leading-tight">
                                             TEL: {company.phone || '3147272285'}
                                         </p>
-                                        <p className="text-xs text-gray-600 uppercase leading-tight">
+                                        <p className="text-[8px] text-gray-600 uppercase leading-tight">
                                             {company.city || 'IBAGUÉ'}
                                         </p>
                                     </div>
@@ -213,14 +213,14 @@ function InvoiceDetailsContent() {
                                     </div>
 
                                     {/* Right: Remission Box */}
-                                    <div className="border border-gray-400 rounded overflow-hidden" style={{ width: '220px' }}>
-                                        <div className="bg-gray-100 border-b border-gray-400 py-1 text-center">
-                                            <h2 className="text-xs font-bold text-gray-700">* REMISIÓN *</h2>
+                                    <div className="border border-gray-400 rounded overflow-hidden" style={{ width: '180px' }}>
+                                        <div className="bg-gray-100 border-b border-gray-400 py-0.5 text-center">
+                                            <h2 className="text-[9px] font-bold text-gray-700">* REMISIÓN *</h2>
                                         </div>
                                         <div className="py-1 text-center">
-                                            <p className="text-2xl font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
+                                            <p className="text-base font-bold text-gray-900">{invoice.number?.toString().padStart(8, '0')}</p>
                                         </div>
-                                        <div className="bg-gray-100 border-t border-gray-400 py-0.5 px-1 flex justify-between text-[10px] text-gray-600">
+                                        <div className="bg-gray-100 border-t border-gray-400 py-0.5 px-1 flex justify-between text-[7px] text-gray-600">
                                             <span>Fecha: {new Date(invoice.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                             <span>Vence: {new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                         </div>
@@ -228,8 +228,8 @@ function InvoiceDetailsContent() {
                                 </div>
 
                                 {/* Customer Info Box */}
-                                <div className="border-t border-b border-gray-300 py-2 mb-2">
-                                    <div className="flex gap-4 mb-2 text-xs leading-tight w-full">
+                                <div className="border-t border-b border-gray-300 py-1 mb-2">
+                                    <div className="flex gap-4 mb-2 text-[8px] leading-tight w-full">
                                         {/* Left Column: Customer Info */}
                                         <div className="flex-1 space-y-0.5">
                                             <div className="flex">
@@ -241,8 +241,8 @@ function InvoiceDetailsContent() {
                                                 <span>{invoice.customers?.nit_cedula}</span>
                                             </div>
                                             <div className="flex">
-                                                <span className="font-bold w-16 text-gray-600">Dir:</span>
-                                                <span className="uppercase text-[10px]">{invoice.customers?.address || 'N/A'}</span>
+                                                <span className="font-bold w-14 text-gray-600">Dir:</span>
+                                                <span className="uppercase text-[7px]">{invoice.customers?.address || 'N/A'}</span>
                                             </div>
                                             <div className="flex">
                                                 <span className="font-bold w-14 text-gray-600">Tel:</span>
@@ -265,8 +265,8 @@ function InvoiceDetailsContent() {
                                                 <span>{new Date(new Date(invoice.created_at).setDate(new Date(invoice.created_at).getDate() + 30)).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                                             </div>
                                             <div className="flex">
-                                                <span className="font-bold w-24 text-gray-600">Vendedor:</span>
-                                                <span className="uppercase text-[10px]">{invoice.seller?.full_name || 'N/A'}</span>
+                                                <span className="font-bold w-20 text-gray-600">Vendedor:</span>
+                                                <span className="uppercase text-[7px]">{invoice.seller?.full_name || 'N/A'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -297,17 +297,28 @@ function InvoiceDetailsContent() {
                     </tbody>
                     <tfoot>
                         <tr className="border-t-2 border-gray-400">
-                            <td colSpan={4}></td>
-                            <td className="py-1 text-right font-bold text-gray-800 border border-gray-400 bg-gray-100 text-[9px] pr-1">TOTAL</td>
-                            <td className="py-1 text-right font-bold text-black border border-gray-400 text-[9px] pr-1">{formatCurrency(invoice.total)}</td>
-                        </tr>
-                        <tr>
-                            <td colSpan={6} className="p-0 border-none">
-                                {/* Footer Notes */}
-                                <div className="text-center mt-2">
-                                    <p className="text-[7px] font-bold uppercase text-gray-600 border-t border-gray-300 pt-1 inline-block px-8">
+                            {/* Left: Firma y Sello & Nota */}
+                            <td colSpan={4} className="align-bottom pt-4 pb-1 pl-1">
+                                <div className="flex justify-between items-end w-full pr-8">
+                                    <div className="text-[9px] font-bold text-gray-700 uppercase">
+                                        FIRMA, O ,SELLO
+                                    </div>
+                                    <div className="text-[7px] font-bold uppercase text-gray-600">
                                         NOTA: DESPUES DE 8 DIAS NO SE ACEPTAN DEVOLUCIONES
-                                    </p>
+                                    </div>
+                                </div>
+                            </td>
+                            {/* Right: Subtotal and Total */}
+                            <td colSpan={2} className="p-0 border-l border-gray-400 align-top">
+                                <div className="flex flex-col h-full w-full">
+                                    <div className="flex border-b border-gray-400">
+                                        <div className="w-[55%] py-1 text-right font-bold text-gray-800 bg-gray-100 text-[9px] pr-1 border-r border-gray-400">SUBTOTAL</div>
+                                        <div className="w-[45%] py-1 text-right font-bold text-black text-[9px] pr-1">{formatCurrency(invoice.subtotal || invoice.total)}</div>
+                                    </div>
+                                    <div className="flex border-b border-gray-400">
+                                        <div className="w-[55%] py-1 text-right font-bold text-gray-800 bg-gray-100 text-[9px] pr-1 border-r border-gray-400">TOTAL</div>
+                                        <div className="w-[45%] py-1 text-right font-bold text-black text-[9px] pr-1">{formatCurrency(invoice.total)}</div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
